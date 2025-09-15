@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Leaf, ArrowLeft, Search, MapPin } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 
 // Sample farm data
 const farms = [
@@ -54,7 +54,7 @@ export default function Discover() {
   const map = useRef(null)
   const [selectedFarm, setSelectedFarm] = useState(null)
   const [searchQuery, setSearchQuery] = useState("")
-  const { connected } = useMiniPay()
+  const { connected } = useWallet()
 
   // Filter farms based on search query
   const filteredFarms = farms.filter(

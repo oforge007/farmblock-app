@@ -20,7 +20,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Plus, FileImage, Wallet } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 
@@ -112,7 +112,7 @@ export default function NFTStore() {
     harvestYear: new Date().getFullYear().toString(),
     recipientSafe: "", // New field for recipient Safe wallet
   })
-  const { connected, connect, pay, address } = useMiniPay()
+  const { connected, connect, pay, address } = useWallet()
 
   const handleNFTClick = (nft) => {
     setSelectedNFT(nft)

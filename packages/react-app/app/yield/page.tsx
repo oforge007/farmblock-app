@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Leaf, ArrowLeft, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 
 // Sample yield pool data
 const yieldPools = [
@@ -91,7 +91,7 @@ export default function YieldGeneration() {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false)
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false)
   const [selectedPool, setSelectedPool] = useState(null)
-  const { connected, connect } = useMiniPay()
+  const { connected, connect } = useWallet()
 
   const handleDeposit = (pool) => {
     setSelectedPool(pool)

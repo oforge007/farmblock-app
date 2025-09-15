@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MessageSquare, Heart, Repeat, Share2, Send } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 
 // Sample casts data
 const casts = [
@@ -56,7 +56,7 @@ const casts = [
 
 export function WarpcastFeed() {
   const [newCast, setNewCast] = useState("")
-  const { connected, connect } = useMiniPay()
+  const { connected, connect } = useWallet()
 
   const handlePostCast = async () => {
     if (!connected) {

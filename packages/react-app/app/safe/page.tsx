@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Leaf, ArrowLeft, Plus, Check, X, Clock, Shield } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 
 // Sample transaction data
 const pendingTransactions = [
@@ -102,7 +102,7 @@ const guardians = [
 
 export default function FarmBlockSafe() {
   const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
-  const { connected, connect } = useMiniPay()
+  const { connected, connect } = useWallet()
 
   const handleApprove = async (transactionId) => {
     if (!connected) {

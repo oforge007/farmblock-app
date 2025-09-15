@@ -16,7 +16,7 @@ interface PaymentParams {
   description: string
 }
 
-export function useMiniPay() {
+export function useWallet() {
   const [connected, setConnected] = useState(false)
   const [address, setAddress] = useState<string | null>(null)
   const [balance, setBalance] = useState<MiniPayBalance | null>(null)

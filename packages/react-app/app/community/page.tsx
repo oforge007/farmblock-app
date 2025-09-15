@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Users, Plus, Check, Clock, Shield, X } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 
 // Sample community data
@@ -95,7 +95,7 @@ const proposals = [
 export default function Community() {
   const [newCommunityDialogOpen, setNewCommunityDialogOpen] = useState(false)
   const [newProposalDialogOpen, setNewProposalDialogOpen] = useState(false)
-  const { connected, connect } = useMiniPay()
+  const { connected, connect } = useWallet()
 
   const handleCreateCommunity = async () => {
     if (!connected) {

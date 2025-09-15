@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Upload, MapPin } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -33,7 +33,7 @@ export default function CreateFarmBlock() {
     stakeCurrency: "cUSD",
   })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const { connected, connect, address } = useMiniPay()
+  const { connected, connect, address } = useWallet()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

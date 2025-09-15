@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { RegenerativeImage } from "@/components/regenerative-image"
 import { Users, Database, Coins, Shield, Plus } from "lucide-react"
 
@@ -145,7 +145,7 @@ export default function FarmBlockPage({ params }) {
   const [selectedPool, setSelectedPool] = useState(null)
   const [poolType, setPoolType] = useState("task")
   const [guardianOnly, setGuardianOnly] = useState(false)
-  const { connected, connect, pay } = useMiniPay()
+  const { connected, connect, pay } = useWallet()
 
   // In a real app, you would fetch the farmblock data based on the ID
   const farmblock = {

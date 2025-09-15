@@ -7,13 +7,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Progress } from "@/components/ui/progress"
 import { Leaf, Plus, ShoppingBag, Sprout, Map, Shield, Coins, ListTodo, MessageSquare, Users } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 import { WarpcastFeed } from "@/components/warpcast-feed"
 
 export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true)
-  const { connected, connect, address, balance } = useMiniPay()
+  const { connected, connect, address, balance } = useWallet()
 
   useEffect(() => {
     // Simulate loading data

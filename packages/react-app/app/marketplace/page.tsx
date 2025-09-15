@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Leaf, ArrowLeft, ShoppingCart, Filter } from "lucide-react"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 
 // Sample product data
 const products = [
@@ -64,7 +64,7 @@ const products = [
 
 export default function Marketplace() {
   const [cart, setCart] = useState<Array<{ id: number; quantity: number }>>([])
-  const { connected, connect, pay } = useMiniPay()
+  const { connected, connect, pay } = useWallet()
 
   const addToCart = (productId: number) => {
     const existingItem = cart.find((item) => item.id === productId)

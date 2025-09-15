@@ -22,7 +22,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { ExpandablePool } from "@/components/expandable-pool"
-import { useMiniPay } from "@/hooks/use-minipay"
+import { useWallet } from "@/hooks/use-minipay"
 import { Plus, Search } from "lucide-react"
 
 // Sample task pools data
@@ -138,7 +138,7 @@ export default function PoolsPage() {
   const [poolType, setPoolType] = useState("task")
   const [guardianOnly, setGuardianOnly] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
-  const { connected, connect } = useMiniPay()
+  const { connected, connect } = useWallet()
 
   const handleCreateProposal = async (e) => {
     e.preventDefault()
