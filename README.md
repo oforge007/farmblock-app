@@ -6,7 +6,7 @@ README.md
 
 
 FarmBlock integrates with MiniPay
-( https://github.com/celo-org/minipay-template) for seamless stablecoin payments, Gardens V2 (https://github.com/1Hive/gardens-v2)  for decentralized governance, Mento for yield generation, thirdweb for NFT functionality, Warpcast for transparency, and MapBox for geotagging farm locations. This project was developed as part of the MiniPay hackathon to showcase how Web3 can drive social impact.
+( https://github.com/celo-org/minipay-template) for seamless stablecoin payments, Gardens V2 (https://github.com/1Hive/gardens-v2)  for decentralized governance, Mento for yield generation, thirdweb for NFT functionality, Warpcast for transparency, and MapBox for geotagging farm locations. 
 
 
 ## Table of Contents
@@ -43,7 +43,6 @@ FarmBlock is built on Celo, leveraging the following components:
   - NFT contracts (via thirdweb) for minting agro-product NFTs.
 - **Governance**: Gardens V2’s Circles model, with funding and signal pools for task management and fund withdrawals.
 - **Integrations**:
-  - MiniPay: Stablecoin payments (cUSD, cKES, cEUR).
   - Mento Router: Swaps for yield pool deposits/withdrawals.
   - thirdweb: NFT minting and trading.
   - Warpcast: Transparency updates.
@@ -54,7 +53,7 @@ FarmBlock is built on Celo, leveraging the following components:
 ## Prerequisites
 - **Node.js**: v20 or higher
 - **Git**: v2.38 or higher
-- **Yarn**: For package management
+- **pnpm**: For package management
 - **MetaMask or MiniPay Wallet**: For interacting with Celo
 - **Celo Testnet Funds**: Get test tokens from the [Celo Faucet](https://faucet.celo.org/) for Alfajores testnet
 - **WalletConnect Cloud Project ID**: For wallet connections (get from [WalletConnect Cloud](https://cloud.walletconnect.com/))
