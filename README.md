@@ -65,12 +65,12 @@ FarmBlock is built on Celo, leveraging the following components:
 ## Installation
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/oforge007/farmblock-dapp.git
+   git clone https://github.com/oforge007/farmblock-app.git
    cd farmblock-dapp
 
 2. **Install Dependencies**:
 
- yarn install
+ pnpm install
 
 
 3. **Configure Environment Variables**:
