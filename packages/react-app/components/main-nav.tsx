@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Plus, Globe } from "lucide-react"
 import Link from "next/link"
-import { LogoWithMap } from "./logo-with-map"
+import { LogoToHome } from "./logo"
 import { useWallet } from "@/hooks/use-minipay"
 import { DocMenu } from "./doc-menu"
 
@@ -13,7 +13,7 @@ export function MainNav({ showBackButton = true }) {
   return (
     <div className="z-10 w-full items-center justify-between text-sm flex mb-4 py-3 px-4 border-b">
       <div className="flex items-center gap-3">
-        <LogoWithMap />
+        <LogoToHome />
         <Link href="/map">
           <Button
             size="icon"
