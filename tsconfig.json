@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {},
+    "strict": true,
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  },
+  "exclude": ["node_modules"],
+  "references": [
+    { "path": "./packages/react-app" },
+    { "path": "./packages/hardhat" }
+  ]
+}
