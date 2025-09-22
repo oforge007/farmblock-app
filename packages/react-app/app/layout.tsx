@@ -1,20 +1,24 @@
+import { ThirdwebProvider } from "thirdweb/react";
+import { client } from "@/lib/thirdweb-client"; // Adjust path
 import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'FarmBlock',
-  description: 'A decentralized agriculture management platform.',
+  description: 'A decentralized farming management platform.',
   generator: 'Next.js',
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <body>{children}</body>
-    </html>
-  )
+    <ThirdwebProvider client={client}>
+      <html lang="en">
+        <body>{children}</body>
+      </html>
+    </ThirdwebProvider>
+  );
 }
