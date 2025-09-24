@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,12 +9,13 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { FileText, ExternalLink, Twitter, Github, MessageSquare } from "lucide-react"
-import Link from "next/link"
+} from "@/components/ui/dropdown-menu";
+import { FileText, ExternalLink, Github } from "lucide-react";
+import Link from "next/link";
+import { SocialIcon } from "thirdweb/react";
 
 export function DocMenu() {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -36,19 +37,19 @@ export function DocMenu() {
         <DropdownMenuLabel>Social Media</DropdownMenuLabel>
         <DropdownMenuItem asChild>
           <a
-            href="https://twitter.com/farmblock"
+            href="https://x.com/0xfarmblock?s=21"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
           >
-            <Twitter className="h-4 w-4" />
-            <span>Twitter</span>
+            <SocialIcon provider="twitter" style={{ width: 16, height: 16 }} />
+            <span>X</span>
             <ExternalLink className="h-3 w-3 ml-auto" />
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a
-            href="https://github.com/farmblock"
+            href="https://github.com/oforge007/farmblock-app"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
@@ -60,17 +61,17 @@ export function DocMenu() {
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a
-            href="https://discord.gg/farmblock"
+            href="https://discord.gg/vXVpxp3U"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
           >
-            <MessageSquare className="h-4 w-4" />
+            <SocialIcon provider="discord" style={{ width: 16, height: 16 }} />
             <span>Discord</span>
             <ExternalLink className="h-3 w-3 ml-auto" />
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

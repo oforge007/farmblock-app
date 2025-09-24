@@ -4,11 +4,15 @@ import { Button } from "@/components/ui/button"
 import { Plus, Globe } from "lucide-react"
 import Link from "next/link"
 import { LogoToHome } from "./logo"
-import { useWallet } from "@/hooks/use-minipay"
+import { ConnectButton } from "thirdweb/react";
+import { createThirdwebClient } from "thirdweb";
 import { DocMenu } from "./doc-menu"
 
-export function MainNav({ showBackButton = true }) {
-  const { connected, connect } = useWallet()
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!,
+});
+
+export function MainNav() {
 
   return (
     <div className="z-10 w-full items-center justify-between text-sm flex mb-4 py-3 px-4 border-b">
@@ -35,11 +39,7 @@ export function MainNav({ showBackButton = true }) {
           </Button>
         </Link>
 
-        {!connected && (
-          <Button size="sm" variant="outline" onClick={connect}>
-            Connect
-          </Button>
-        )}
+        <ConnectButton client={client} />
       </div>
     </div>
   )
