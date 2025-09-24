@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,13 +9,12 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FileText, ExternalLink, Github } from "lucide-react";
-import Link from "next/link";
-import { SocialIcon } from "thirdweb/react";
+} from "@/components/ui/dropdown-menu"
+import { FileText, ExternalLink, Twitter, Github, MessageSquare } from "lucide-react"
+import Link from "next/link"
 
 export function DocMenu() {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false)
 
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
@@ -42,14 +41,14 @@ export function DocMenu() {
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
           >
-            <SocialIcon provider="twitter" style={{ width: 16, height: 16 }} />
-            <span>X</span>
+            <Twitter className="h-4 w-4" />
+            <span>Twitter</span>
             <ExternalLink className="h-3 w-3 ml-auto" />
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a
-            href="https://github.com/oforge007/farmblock-app"
+            href="https://github.com/oforge007farmblock-app"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
@@ -66,12 +65,12 @@ export function DocMenu() {
             rel="noopener noreferrer"
             className="flex items-center gap-2 cursor-pointer"
           >
-            <SocialIcon provider="discord" style={{ width: 16, height: 16 }} />
+            <MessageSquare className="h-4 w-4" />
             <span>Discord</span>
             <ExternalLink className="h-3 w-3 ml-auto" />
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
