@@ -1,18 +1,20 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { useActiveAccount, ConnectButton } from "thirdweb/react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button"; // Your UI lib
 import { Plus, Globe } from "lucide-react"
-import Link from "next/link"
 import { LogoToHome } from "./logo"
-import { ConnectButton } from "thirdweb/react";
 import { createThirdwebClient } from "thirdweb";
-import { DocMenu } from "./doc-menu"
+import { Verify } from "./SELF-zk";
 
 const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!,
 });
 
 export function MainNav() {
+const account = useActiveAccount();
+const address = account?.address;
 
   return (
     <div className="z-10 w-full items-center justify-between text-sm flex mb-4 py-3 px-4 border-b">
@@ -31,7 +33,6 @@ export function MainNav() {
       </div>
 
       <div className="flex items-center gap-2">
-        <DocMenu />
         <Link href="/create-farmblock">
           <Button size="sm" className="flex items-center gap-1">
             <Plus className="h-4 w-4" />
@@ -40,6 +41,7 @@ export function MainNav() {
         </Link>
 
         <ConnectButton client={client} />
+          <Verify address={address} />
       </div>
     </div>
   )

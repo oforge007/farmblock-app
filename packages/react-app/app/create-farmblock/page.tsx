@@ -314,7 +314,7 @@ export default function CreateFarmBlock() {
           </CardContent>
           <CardFooter>
             <Button onClick={handleSubmit} className="w-full">
-              {connected ? "Create FarmBlock" : "Connect Wallet to Continue"}
+              {connected ? "Create FarmBlock" : "Proof Self and Create FarmBlock"}
             </Button>
           </CardFooter>
         </Card>
