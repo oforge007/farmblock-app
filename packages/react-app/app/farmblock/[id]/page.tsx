@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { useRouter } from "next/router";
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -25,6 +26,13 @@ import {
 import { useWallet } from "@/hooks/use-minipay"
 import { RegenerativeImage } from "@/components/regenerative-image"
 import { Users, Database, Coins, Shield, Plus } from "lucide-react"
+import { createThirdwebClient } from "thirdweb";
+import { useActiveAccount, ConnectButton } from "thirdweb/react";
+
+
+const client = createThirdwebClient({
+  clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!,
+});
 
 // Sample task pools data
 const taskPools = [
@@ -32,7 +40,7 @@ const taskPools = [
     id: 46,
     name: "Infrastructure",
     votingWeight: "Fixed",
-    proposals: 2,
+    proposalsCount: 2, // Renamed to avoid duplicate key
     funds: "0.7",
     minSupport: 10.55,
     collateralDeposit: 5,
@@ -56,7 +64,7 @@ const taskPools = [
     id: 47,
     name: "Seed Purchase",
     votingWeight: "Fixed",
-    proposals: 1,
+    proposalsCount: 1, // Renamed to avoid duplicate key
     funds: "1.2",
     minSupport: 6.68,
     collateralDeposit: 10,
@@ -84,7 +92,7 @@ const proposalPools = [
     id: 48,
     name: "Community Governance",
     votingWeight: "Fixed",
-    proposals: 1,
+    proposalsCount: 1, // Renamed to avoid duplicate key
     funds: "0.0",
     minSupport: 15.0,
     proposals: [
@@ -135,7 +143,14 @@ const tasks = [
   },
 ]
 
-export default function FarmBlockPage({ params }) {
+interface FarmBlockPageProps {
+  params: {
+    id: string;
+  };
+}
+
+export default function FarmBlockPage({ params }: FarmBlockPageProps) {
+  const [farmblock, setFarmblock] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState("overview")
   const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
   const [transactionType, setTransactionType] = useState("task-pool")
@@ -145,87 +160,104 @@ export default function FarmBlockPage({ params }) {
   const [selectedPool, setSelectedPool] = useState(null)
   const [poolType, setPoolType] = useState("task")
   const [guardianOnly, setGuardianOnly] = useState(false)
-  const { connected, connect, pay } = useWallet()
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const account = useActiveAccount();
+  const address = account?.address;
+  const handlePay = async () => {
+    if (!account) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+    // Add your pay/transaction logic here, e.g. call a contract or use TransactionButton
+  };
 
-  // In a real app, you would fetch the farmblock data based on the ID
-  const farmblock = {
-    id: params.id,
-    name: "OxFarmBlock",
-    location: "Kenya",
-    image: "/images/sustainable-farm.jpeg",
-    members: 0,
-    pools: 1,
-    staked: "0",
-    registrationStake: "5.1",
-    description: "A community of farmers in Kenya focused on sustainable agriculture and transparent governance.",
-    mission:
-      "Our mission is to empower local farmers through sustainable agricultural practices, transparent governance, and fair trade. We aim to combat hunger and drought by implementing innovative farming techniques and fostering community collaboration.",
-    governanceRules:
-      "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
-  }
+  useEffect(() => {
+    if (!params.id) {
+      setError("Invalid FarmBlock ID.");
+      setIsLoading(false);
+      return;
+    }
+
+    // Simulate fetching farmblock data
+    const fetchFarmblock = async () => {
+      try {
+        setIsLoading(true);
+        // Replace this with actual API call
+        const fetchedFarmblock = {
+          id: params.id,
+          name: "OxFarmBlock",
+          location: "Kenya",
+          image: "/images/sustainable-farm.jpeg",
+          members: 0,
+          pools: 1,
+          staked: "0",
+          registrationStake: "5.1",
+          description: "A community of farmers in Kenya focused on sustainable agriculture and transparent governance.",
+          mission:
+            "Our mission is to empower local farmers through sustainable agricultural practices, transparent governance, and fair trade. We aim to combat hunger and drought by implementing innovative farming techniques and fostering community collaboration.",
+          governanceRules:
+            "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
+        };
+        setFarmblock(fetchedFarmblock);
+        setIsLoading(false);
+      } catch (err) {
+        setError("Failed to load FarmBlock data.");
+        setIsLoading(false);
+      }
+    };
+
+    fetchFarmblock();
+  }, [params.id]);
 
   const handleRegisterInCommunity = async () => {
     if (!connected) {
-      await connect()
-      return
+      alert("Please connect your wallet first.");
+      return;
     }
 
     try {
-      // Here you would integrate with MiniPay to process the registration stake payment
-      await pay({
-        amount: Number.parseFloat(farmblock.registrationStake),
-        currency: "cUSD",
-        recipient: "0x123...", // Community's wallet address
-        description: `Registration stake for ${farmblock.name}`,
-      })
-
-      alert("Registration successful! You are now a member of this community.")
-      setRegistrationDialogOpen(false)
+      alert("Registration successful! You are now a member of this community.");
+      setRegistrationDialogOpen(false);
     } catch (error) {
-      console.error("Registration failed:", error)
-      alert("Registration failed. Please try again.")
+      console.error("Registration failed:", error);
+      alert("Registration failed. Please try again.");
     }
-  }
+  };
 
   const handleCreateTransaction = async () => {
     if (!connected) {
-      await connect()
-      return
+      alert("Please connect your wallet first.");
+      return;
     }
 
-    // Here you would integrate with the blockchain to create a new transaction
-    alert("Transaction proposal created! Please confirm in your wallet.")
-    setNewTransactionDialogOpen(false)
-  }
+    alert("Transaction proposal created! Please confirm in your wallet.");
+    setNewTransactionDialogOpen(false);
+  };
 
-  const handleCreateProposal = async (e) => {
-    e.preventDefault()
+  const handleCreatePool = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!connected) {
-      await connect()
-      return
+      alert("Please connect your wallet first.");
+      return;
     }
 
-    // Here you would integrate with the blockchain to create a new proposal
-    alert("Proposal created successfully! Please confirm the transaction in your wallet.")
-    setCreateProposalDialogOpen(false)
+    alert("Pool created successfully! Please confirm the transaction in your wallet.");
+    setCreatePoolDialogOpen(false);
+  };
+
+  const connected = true; // Mocked connection status for now
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
-  const handleCreatePool = async (e) => {
-    e.preventDefault()
-    if (!connected) {
-      await connect()
-      return
-    }
-
-    // Here you would integrate with the blockchain to create a new pool
-    alert("Pool created successfully! Please confirm the transaction in your wallet.")
-    setCreatePoolDialogOpen(false)
+  if (error) {
+    return <div>Error: {error}</div>;
   }
 
-  const openCreateProposalDialog = (pool, type) => {
-    setSelectedPool(pool)
-    setPoolType(type)
-    setCreateProposalDialogOpen(true)
+  if (!farmblock) {
+    return <div>No FarmBlock data available.</div>;
   }
 
   return (
@@ -407,7 +439,7 @@ export default function FarmBlockPage({ params }) {
                       <h4 className="font-medium text-lg mb-2">Governance Rules</h4>
                       {farmblock.governanceRules ? (
                         <div className="bg-muted rounded-md p-4">
-                          {farmblock.governanceRules.split("\n").map((rule, index) => (
+                          {farmblock.governanceRules.split("\n").map((rule: string, index: number) => (
                             <p key={index} className="mb-2 last:mb-0">
                               {rule}
                             </p>
@@ -817,7 +849,11 @@ export default function FarmBlockPage({ params }) {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Checkbox id="guardian-only" checked={guardianOnly} onCheckedChange={setGuardianOnly} />
+                <Checkbox
+                  id="guardian-only"
+                  checked={guardianOnly}
+                  onCheckedChange={(checked) => setGuardianOnly(checked === true)}
+                />
                 <Label htmlFor="guardian-only" className="text-sm">
                   Guardian-only voting (restrict voting to community guardians)
                 </Label>

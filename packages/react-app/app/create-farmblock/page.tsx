@@ -269,7 +269,7 @@ export default function CreateFarmBlock() {
 
                 <TabsContent value="documents" className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="document">Upload Documentation (Optional)</Label>
+                    <Label htmlFor="document">Upload NFT mint Prompt</Label>
                     <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center">
                       <Upload className="h-10 w-10 text-gray-400 mb-2" />
                       <p className="text-sm text-muted-foreground mb-2">
