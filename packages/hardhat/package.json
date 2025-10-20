@@ -10,6 +10,8 @@
     "deploy": "hardhat ignition deploy ignition/modules/Lock.ts",
     "deploy:alfajores": "hardhat ignition deploy ignition/modules/Lock.ts --network alfajores",
     "deploy:celo": "hardhat ignition deploy ignition/modules/Lock.ts --network celo",
+    "deploy:sepolia": "hardhat ignition deploy ignition/modules/Lock.ts --network celoSepolia",
+    "deploy:celoSepolia": "hardhat ignition deploy ignition/modules/Lock.ts --network celoSepolia",
     "verify": "hardhat verify",
     "clean": "hardhat clean",
     "typechain": "hardhat typechain"
@@ -38,7 +40,7 @@
     "@types/mocha": ">=9.1.0",
     "chai": "^4.2.0",
     "ethers": "^6.4.0",
-    "hardhat": "^2.19.0",
+    "hardhat": "^2.26.3",
     "hardhat-gas-reporter": "^1.0.8",
     "solidity-coverage": "^0.8.1",
     "ts-node": ">=8.0.0",

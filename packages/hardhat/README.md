@@ -14,8 +14,8 @@ pnpm compile
 # Run tests
 pnpm test
 
-# Deploy to Alfajores testnet
-pnpm deploy:alfajores
+# Deploy to Sepolia testnet (chainId 11142220)
+pnpm deploy:sepolia
 
 # Deploy to Celo mainnet
 pnpm deploy:celo
@@ -28,6 +28,7 @@ pnpm deploy:celo
 - `pnpm deploy` - Deploy to local network
 - `pnpm deploy:alfajores` - Deploy to Celo Alfajores testnet
 - `pnpm deploy:celo` - Deploy to Celo mainnet
+ - `pnpm deploy:sepolia` - Deploy to Sepolia testnet (chainId 11142220)
 - `pnpm verify` - Verify contracts on Celoscan
 - `pnpm clean` - Clean artifacts and cache
 
@@ -44,6 +45,11 @@ pnpm deploy:celo
 - **Explorer**: https://alfajores.celoscan.io
 - **Faucet**: https://faucet.celo.org
 
+### Sepolia Testnet (preferred for test deployments in this project)
+ - **Chain ID**: 11142220
+- **RPC URL**: Set via `CELO_SEPOLIA_URL` in `.env` (example provided in `.env.example`)
+- **Explorer/Verification**: Use Etherscan Sepolia (set `ETHERSCAN_API_KEY` in `.env`)
+
 ## 🔧 Environment Setup
 
 1. Copy the environment template:
@@ -51,10 +57,12 @@ pnpm deploy:celo
    cp .env.example .env
    ```
 
-2. Fill in your private key and API keys:
+2. Fill in your private key and API keys (see `packages/hardhat/.env.example`):
    ```env
-   PRIVATE_KEY=your_private_key_without_0x_prefix
-   CELOSCAN_API_KEY=your_celoscan_api_key
+   PRIVATE_KEY=your_private_key_here
+   ETHERSCAN_API_KEY=your_etherscan_api_key_here
+   CELO_SEPOLIA_URL=https://your-sepolia-rpc-provider
+      CELO_SEPOLIA_CHAIN_ID=11142220
    ```
 
 ## 📁 Project Structure
@@ -78,7 +86,7 @@ tsconfig.json      # TypeScript configuration
 
 - Never commit your `.env` file with real private keys
 - Use a dedicated wallet for development/testing
-- Test thoroughly on Alfajores before mainnet deployment
+ - Test thoroughly on Sepolia (chainId 11142220) before mainnet deployment
 - Consider using a hardware wallet for mainnet deployments
 
 ## 📚 Learn More
