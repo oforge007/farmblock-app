@@ -34,6 +34,15 @@ const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!,
 });
 
+const account = useActiveAccount();
+  const address = account?.address;
+  const handlePay = async () => {
+    if (!account) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+    // Add your pay/transaction logic here, e.g. call a contract or use TransactionButton
+  };
 // Sample task pools data
 const taskPools = [
   {
@@ -162,15 +171,7 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
   const [guardianOnly, setGuardianOnly] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const account = useActiveAccount();
-  const address = account?.address;
-  const handlePay = async () => {
-    if (!account) {
-      alert("Please connect your wallet first.");
-      return;
-    }
-    // Add your pay/transaction logic here, e.g. call a contract or use TransactionButton
-  };
+  
 
   useEffect(() => {
     if (!params.id) {

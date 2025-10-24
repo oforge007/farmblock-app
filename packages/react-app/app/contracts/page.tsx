@@ -12,6 +12,14 @@ export default function Contracts() {
     alert("Copied to clipboard!")
   }
 
+  // Read deployed contract addresses from environment variables.
+  // Set these in packages/react-app/.env.local (NEXT_PUBLIC_...)
+  const FUNDING_POOL_ADDRESS = process.env.NEXT_PUBLIC_FUNDING_POOL_ADDRESS ?? "[not set]"
+  const YIELD_DEPOSITOR_ADDRESS = process.env.NEXT_PUBLIC_YIELD_DEPOSITOR_ADDRESS ?? "[not set]"
+  const NFT_CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_NFT_CONTRACT_ADDRESS ?? "[not set]"
+
+  const explorerBase = "https://explorer.celo.org/sepolia/address"
+
   return (
     <main className="flex min-h-screen flex-col items-center p-4 md:p-24">
       <MainNav />
@@ -49,13 +57,13 @@ export default function Contracts() {
                     <p className="text-sm font-medium">Contract Address</p>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="bg-muted p-2 rounded text-sm flex-1 overflow-x-auto">
-                        [TBD after deployment]
+                        {FUNDING_POOL_ADDRESS}
                       </code>
                       <Button
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => copyToClipboard("[TBD after deployment]")}
+                        onClick={() => copyToClipboard(FUNDING_POOL_ADDRESS)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -103,10 +111,15 @@ export default function Contracts() {
                   <Code className="h-4 w-4" />
                   View Source Code
                 </Button>
-                <Button className="flex items-center gap-2">
+                <a
+                  href={FUNDING_POOL_ADDRESS && FUNDING_POOL_ADDRESS !== "[not set]" ? `${explorerBase}/${FUNDING_POOL_ADDRESS}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 btn"
+                >
                   <ExternalLink className="h-4 w-4" />
                   View on Explorer
-                </Button>
+                </a>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -132,13 +145,13 @@ export default function Contracts() {
                     <p className="text-sm font-medium">Contract Address</p>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="bg-muted p-2 rounded text-sm flex-1 overflow-x-auto">
-                        [TBD after deployment]
+                        {YIELD_DEPOSITOR_ADDRESS}
                       </code>
                       <Button
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => copyToClipboard("[TBD after deployment]")}
+                        onClick={() => copyToClipboard(YIELD_DEPOSITOR_ADDRESS)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -186,10 +199,15 @@ export default function Contracts() {
                   <Code className="h-4 w-4" />
                   View Source Code
                 </Button>
-                <Button className="flex items-center gap-2">
+                <a
+                  href={YIELD_DEPOSITOR_ADDRESS && YIELD_DEPOSITOR_ADDRESS !== "[not set]" ? `${explorerBase}/${YIELD_DEPOSITOR_ADDRESS}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 btn"
+                >
                   <ExternalLink className="h-4 w-4" />
                   View on Explorer
-                </Button>
+                </a>
               </CardFooter>
             </Card>
           </TabsContent>
@@ -213,13 +231,13 @@ export default function Contracts() {
                     <p className="text-sm font-medium">Contract Address</p>
                     <div className="flex items-center gap-2 mt-1">
                       <code className="bg-muted p-2 rounded text-sm flex-1 overflow-x-auto">
-                        [TBD after deployment]
+                        {NFT_CONTRACT_ADDRESS}
                       </code>
                       <Button
                         variant="outline"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => copyToClipboard("[TBD after deployment]")}
+                        onClick={() => copyToClipboard(NFT_CONTRACT_ADDRESS)}
                       >
                         <Copy className="h-4 w-4" />
                       </Button>
@@ -263,10 +281,15 @@ export default function Contracts() {
                   <Code className="h-4 w-4" />
                   View Source Code
                 </Button>
-                <Button className="flex items-center gap-2">
+                <a
+                  href={NFT_CONTRACT_ADDRESS && NFT_CONTRACT_ADDRESS !== "[not set]" ? `${explorerBase}/${NFT_CONTRACT_ADDRESS}` : '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 btn"
+                >
                   <ExternalLink className="h-4 w-4" />
                   View on Explorer
-                </Button>
+                </a>
               </CardFooter>
             </Card>
           </TabsContent>

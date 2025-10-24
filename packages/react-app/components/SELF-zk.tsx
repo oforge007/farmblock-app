@@ -41,14 +41,14 @@ export function Verify({ address }: { address?: string }) {
   };
 
   if (!address) {
-    return <div>Please connect your wallet to verify.</div>;
+    return <div>Connect and verify.</div>;
   }
 
   return (
     <div>
       {selfApp ? (
         <button type="button" onClick={openSelfApp} disabled={!universalLink}>
-          Open Self App
+          Proof Self
         </button>
       ) : (
         <div>
