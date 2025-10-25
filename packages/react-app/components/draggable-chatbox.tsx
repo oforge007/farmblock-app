@@ -1,19 +1,30 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect, useContext } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ChevronDown, ChevronUp, MessageSquare, X, GripVertical } from "lucide-react"
+import { LanguageContext } from "@/components/language/LanguageProvider"
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { motion } from "framer-motion"
 
 export function DraggableChatbox() {
   const [isOpen, setIsOpen] = useState(false)
   const [position, setPosition] = useState({ x: 0, y: 0 })
+  const { language, setLanguage, t, languageName } = useContext(LanguageContext)
+  const [langQuery, setLangQuery] = useState("")
   const constraintsRef = useRef(null)
 
   // Mock implementation of draggable functionality
   // In a real implementation, you would use a library like react-draggable or framer-motion
-  const handleDrag = (e, info) => {
+  const handleDrag = (e: any, info: { delta: { x: number; y: number } }) => {
     setPosition({
       x: position.x + info.delta.x,
       y: position.y + info.delta.y,
@@ -66,24 +77,44 @@ export function DraggableChatbox() {
                 How to use FarmBlock
               </CardTitle>
             </div>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(!isOpen)}>
-                {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-              </Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
+              <div className="flex items-center gap-2">
+                {/* Simplified language selector: show 2-letter code badge and a compact dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-6 w-auto px-2">
+                      <div className="text-[11px] font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700">{language}</div>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuLabel>Choose language</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setLanguage("EN")}>English (EN)</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setLanguage("ES")}>Español (ES)</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setLanguage("FR")}>Français (FR)</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <div className="text-xs font-semibold px-2 py-0.5 rounded bg-green-50 text-green-700">{languageName}</div>
+
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(!isOpen)}>
+                    {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsOpen(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
           </CardHeader>
           {isOpen && (
             <CardContent className="p-3 text-sm">
               <ol className="space-y-2 list-decimal list-inside">
-                <li>Connect your wallet to the app</li>
-                <li>Create a FarmBlock community</li>
-                <li>Use the TaskManager to create and complete tasks</li>
-                <li>Mint and trade agro-product NFTs in the NFT store</li>
-                <li>Deposit funds into Mento yield pools</li>
-                <li>Share updates via Warpcast and explore FarmBlock locations</li>
+                <li>{t("step_connect_wallet")}</li>
+                <li>{t("step_create_community")}</li>
+                <li>{t("step_task_manager")}</li>
+                <li>{t("step_mint_nft")}</li>
+                <li>{t("step_deposit")}</li>
+                <li>{t("step_share")}</li>
               </ol>
             </CardContent>
           )}
