@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -34,15 +34,6 @@ const client = createThirdwebClient({
   clientId: process.env.NEXT_PUBLIC_THIRDWEB_CLIENT_ID!,
 });
 
-const account = useActiveAccount();
-  const address = account?.address;
-  const handlePay = async () => {
-    if (!account) {
-      alert("Please connect your wallet first.");
-      return;
-    }
-    // Add your pay/transaction logic here, e.g. call a contract or use TransactionButton
-  };
 // Sample task pools data
 const taskPools = [
   {
@@ -158,6 +149,28 @@ interface FarmBlockPageProps {
   };
 }
 
+interface FarmblockData {
+  farmName: string;
+  location: string;
+  size: string;
+  cropType: string;
+  description: string;
+  safeWallet: string;
+  registrationStake: string;
+  stakeCurrency: string;
+  mission?: string;
+  governanceRules?: string;
+  nftPromptFile?: {
+    name: string;
+    size: number;
+    type: string;
+  };
+  nftPromptFileBase64?: string;
+  createdAt: string;
+  creatorAddress?: string;
+  nftDropAddress?: string;
+}
+
 export default function FarmBlockPage({ params }: FarmBlockPageProps) {
   const [farmblock, setFarmblock] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState("overview")
@@ -171,7 +184,14 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
   const [guardianOnly, setGuardianOnly] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+  const [farmblockData, setFarmblockData] = useState<FarmblockData | null>(null);
+
+  // Router for navigation
+  const router = useRouter();
+
+  // Thirdweb hooks - now properly inside component
+  const account = useActiveAccount();
+  const address = account?.address;
 
   useEffect(() => {
     if (!params.id) {
@@ -180,35 +200,99 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
       return;
     }
 
-    // Simulate fetching farmblock data
-    const fetchFarmblock = async () => {
+    // Check for farmblock data from create-farmblock page
+    const storedFarmblock = localStorage.getItem("pendingFarmblock");
+    const storedCreatedFarmblock = localStorage.getItem(`farmblock_${params.id}`);
+
+    if (storedFarmblock) {
       try {
-        setIsLoading(true);
-        // Replace this with actual API call
+        const data: FarmblockData = JSON.parse(storedFarmblock);
+        setFarmblockData(data);
+
+        // Create farmblock object from the data
         const fetchedFarmblock = {
           id: params.id,
-          name: "OxFarmBlock",
-          location: "Kenya",
+          name: data.farmName,
+          location: data.location,
+          image: "/images/sustainable-farm.jpeg", // Default image, could be enhanced later
+          members: 0,
+          pools: 1,
+          staked: "0",
+          registrationStake: data.registrationStake,
+          stakeCurrency: data.stakeCurrency,
+          description: data.description,
+          mission: data.mission || "Empowering communities through sustainable agriculture and transparent governance.",
+          governanceRules: data.governanceRules ||
+            "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
+          safeWallet: data.safeWallet,
+          nftDropAddress: data.nftDropAddress,
+          guardians: [], // Will be populated from Safe contract
+          pendingTransactions: [], // Will be populated from Safe contract
+        };
+
+        setFarmblock(fetchedFarmblock);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error parsing farmblock data:", err);
+        setError("Failed to load FarmBlock data from creation.");
+        setIsLoading(false);
+      }
+    } else if (storedCreatedFarmblock) {
+      try {
+        const data: FarmblockData = JSON.parse(storedCreatedFarmblock);
+        setFarmblockData(data);
+
+        const fetchedFarmblock = {
+          id: params.id,
+          name: data.farmName,
+          location: data.location,
           image: "/images/sustainable-farm.jpeg",
           members: 0,
           pools: 1,
           staked: "0",
-          registrationStake: "5.1",
-          description: "A community of farmers in Kenya focused on sustainable agriculture and transparent governance.",
-          mission:
-            "Our mission is to empower local farmers through sustainable agricultural practices, transparent governance, and fair trade. We aim to combat hunger and drought by implementing innovative farming techniques and fostering community collaboration.",
-          governanceRules:
+          registrationStake: data.registrationStake,
+          stakeCurrency: data.stakeCurrency,
+          description: data.description,
+          mission: data.mission || "Empowering communities through sustainable agriculture and transparent governance.",
+          governanceRules: data.governanceRules ||
             "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
+          safeWallet: data.safeWallet,
+          nftDropAddress: data.nftDropAddress,
+          guardians: [],
+          pendingTransactions: [],
         };
+
         setFarmblock(fetchedFarmblock);
         setIsLoading(false);
       } catch (err) {
+        console.error("Error parsing stored farmblock data:", err);
         setError("Failed to load FarmBlock data.");
         setIsLoading(false);
       }
-    };
-
-    fetchFarmblock();
+    } else {
+      // Fallback to mock data if no real data exists
+      const fetchedFarmblock = {
+        id: params.id,
+        name: "OxFarmBlock",
+        location: "Kenya",
+        image: "/images/sustainable-farm.jpeg",
+        members: 0,
+        pools: 1,
+        staked: "0",
+        registrationStake: "5.1",
+        stakeCurrency: "cUSD",
+        description: "A community of farmers in Kenya focused on sustainable agriculture and transparent governance.",
+        mission:
+          "Our mission is to empower local farmers through sustainable agricultural practices, transparent governance, and fair trade. We aim to combat hunger and drought by implementing innovative farming techniques and fostering community collaboration.",
+        governanceRules:
+          "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
+        safeWallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        guardians: [],
+        pendingTransactions: [],
+      };
+      setFarmblock(fetchedFarmblock);
+      setIsLoading(false);
+    }
   }, [params.id]);
 
   const handleRegisterInCommunity = async () => {
@@ -298,47 +382,16 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
               </div>
             </div>
 
-            <Dialog open={registrationDialogOpen} onOpenChange={setRegistrationDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="w-full">Register in community</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[425px]">
-                <DialogHeader>
-                  <DialogTitle>Register in {farmblock.name}</DialogTitle>
-                  <DialogDescription>
-                    Join this community by depositing the registration stake of {farmblock.registrationStake} cUSD.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <div className="rounded-lg bg-muted p-4 mb-4">
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium">Registration Stake:</span>
-                      <span className="font-bold">{farmblock.registrationStake} cUSD</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      This stake is required to join the community and participate in governance decisions. It helps
-                      ensure commitment and prevent spam.
-                    </p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    By registering, you agree to abide by the community's governance rules and participate in a
-                    constructive manner.
-                  </p>
-                </div>
-                <DialogFooter>
-                  <Button onClick={handleRegisterInCommunity}>
-                    {connected ? "Confirm Registration" : "Connect Wallet to Register"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <Button className="w-full" onClick={() => router.push('/nft-store')}>
+              Register in community - Buy NFT
+            </Button>
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
           <TabsList className="mb-4 flex overflow-x-auto pb-px">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="yield">Yield</TabsTrigger>
+            <TabsTrigger value="donate">Donate</TabsTrigger>
             <TabsTrigger value="safe">Safe</TabsTrigger>
           </TabsList>
 
@@ -357,7 +410,7 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">Total Value Locked</CardTitle>
+                      <CardTitle className="text-sm font-medium">Total Holdings</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">0.00 cUSD</div>
@@ -456,13 +509,13 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
             </div>
           </TabsContent>
 
-          <TabsContent value="yield">
+          <TabsContent value="donate">
             <Card>
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <div>
-                    <CardTitle>Stablecoin Saving Strategies</CardTitle>
-                    <CardDescription>Earn returns on stablecoin deposits through various strategies</CardDescription>
+                    <CardTitle>Support {farmblock.name}</CardTitle>
+                    <CardDescription>Directly fund the FarmBlock Safe wallet to support community initiatives</CardDescription>
                   </div>
                   <Badge className="bg-green-100 text-green-700">Active</Badge>
                 </div>
@@ -470,96 +523,85 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
               <CardContent>
                 <div className="space-y-6">
                   <div>
-                    <p className="font-medium text-lg mb-3">Available Strategies</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-                      <Card className="border-green-100 hover:border-green-300 transition-colors">
+                    <p className="font-medium text-lg mb-3">Donation Options</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Support {farmblock.name} by donating directly to the community Safe wallet. Your contribution will help fund community initiatives, tasks, and governance activities.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <Card className="border-blue-100 hover:border-blue-300 transition-colors">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Conservative Strategy</CardTitle>
-                          <CardDescription>cUSD Yield Pool • 5.2% APY</CardDescription>
+                          <CardTitle className="text-sm">cUSD Donation</CardTitle>
+                          <CardDescription>US Dollar Stablecoin</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Risk Level</span>
-                            <div className="flex">
-                              <span className="bg-green-500 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-gray-200 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-gray-200 w-3 h-3 rounded-full"></span>
-                            </div>
-                          </div>
                           <div className="flex justify-between items-center mt-2">
-                            <span className="text-sm">Total Deposited</span>
+                            <span className="text-sm">Safe Balance</span>
                             <span className="font-medium">0.00 cUSD</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Low-risk strategy focusing on stable returns through Mento stablecoin yield pools.
+                            Directly fund the community Safe wallet in US Dollar equivalent stablecoin.
                           </p>
                         </CardContent>
                         <CardFooter className="pt-0">
-                          <Button className="w-full">Deposit</Button>
+                          <Button className="w-full">Donate cUSD</Button>
                         </CardFooter>
                       </Card>
 
-                      <Card className="border-yellow-100 hover:border-yellow-300 transition-colors">
+                      <Card className="border-purple-100 hover:border-purple-300 transition-colors">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Balanced Strategy</CardTitle>
-                          <CardDescription>cEUR Yield Pool • 7.8% APY</CardDescription>
+                          <CardTitle className="text-sm">cEUR Donation</CardTitle>
+                          <CardDescription>Euro Stablecoin</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Risk Level</span>
-                            <div className="flex">
-                              <span className="bg-yellow-500 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-yellow-500 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-gray-200 w-3 h-3 rounded-full"></span>
-                            </div>
-                          </div>
                           <div className="flex justify-between items-center mt-2">
-                            <span className="text-sm">Total Deposited</span>
+                            <span className="text-sm">Safe Balance</span>
                             <span className="font-medium">0.00 cEUR</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Medium-risk strategy with higher returns through diversified stablecoin pools.
+                            Support community initiatives with Euro equivalent stablecoin.
                           </p>
                         </CardContent>
                         <CardFooter className="pt-0">
-                          <Button className="w-full">Deposit</Button>
+                          <Button className="w-full">Donate cEUR</Button>
                         </CardFooter>
                       </Card>
 
-                      <Card className="border-orange-100 hover:border-orange-300 transition-colors">
+                      <Card className="border-green-100 hover:border-green-300 transition-colors">
                         <CardHeader className="pb-2">
-                          <CardTitle className="text-sm">Growth Strategy</CardTitle>
-                          <CardDescription>cKES Yield Pool • 9.1% APY</CardDescription>
+                          <CardTitle className="text-sm">cKES Donation</CardTitle>
+                          <CardDescription>Kenyan Shilling Stablecoin</CardDescription>
                         </CardHeader>
                         <CardContent className="pb-2">
-                          <div className="flex justify-between items-center">
-                            <span className="text-sm">Risk Level</span>
-                            <div className="flex">
-                              <span className="bg-orange-500 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-orange-500 w-3 h-3 rounded-full mr-1"></span>
-                              <span className="bg-orange-500 w-3 h-3 rounded-full"></span>
-                            </div>
-                          </div>
                           <div className="flex justify-between items-center mt-2">
-                            <span className="text-sm">Total Deposited</span>
+                            <span className="text-sm">Safe Balance</span>
                             <span className="font-medium">0.00 cKES</span>
                           </div>
                           <p className="text-xs text-muted-foreground mt-2">
-                            Higher-risk strategy aiming for maximum returns through innovative yield mechanisms.
+                            Donate in local currency equivalent to support community growth.
                           </p>
                         </CardContent>
                         <CardFooter className="pt-0">
-                          <Button className="w-full">Deposit</Button>
+                          <Button className="w-full">Donate cKES</Button>
                         </CardFooter>
                       </Card>
                     </div>
                   </div>
 
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="font-medium text-blue-900 mb-2">Why Donate?</h3>
+                    <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+                      <li>Support community farming initiatives and sustainability</li>
+                      <li>Fund task payouts and community rewards</li>
+                      <li>Enable community members to earn through governance participation</li>
+                      <li>Help expand the farmblock network across regions</li>
+                    </ul>
+                  </div>
+
                   <div>
-                    <p className="font-medium text-lg mb-3">My Active Strategies</p>
-                    <p className="text-muted-foreground">You have no active saving strategies</p>
+                    <p className="font-medium text-lg mb-3">My Donations</p>
+                    <p className="text-muted-foreground">You have no active donations</p>
                     <Button variant="outline" className="mt-4">
-                      View All Strategies
+                      View Donation History
                     </Button>
                   </div>
                 </div>
@@ -573,20 +615,40 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
                 <div className="flex justify-between items-start">
                   <div>
                     <CardTitle>FarmBlock Safe</CardTitle>
-                    <CardDescription>Community-driven peer bank for funding and governance</CardDescription>
+                    <CardDescription>Community-driven multisig wallet for funding and governance</CardDescription>
                   </div>
                   <Badge className="bg-green-100 text-green-700">Active</Badge>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Safe Wallet Address */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-blue-900">Safe Multisig Wallet</h3>
+                        <p className="text-sm text-blue-700 mt-1">
+                          All community funds and NFT proceeds are managed through this secure multisig wallet
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <code className="text-xs bg-white px-2 py-1 rounded text-blue-800 break-all">
+                          {farmblock.safeWallet}
+                        </code>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Card>
                       <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium">Safe Balance</CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <div className="text-2xl font-bold">0.00 cUSD</div>
+                        <div className="text-2xl font-bold">0.00 {farmblock.stakeCurrency || 'cUSD'}</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          From NFT minting proceeds
+                        </p>
                       </CardContent>
                     </Card>
 
@@ -596,22 +658,113 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Awaiting guardian signatures
+                        </p>
                       </CardContent>
                     </Card>
 
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Guardians</CardTitle>
+                        <CardTitle className="text-sm font-medium">Active Guardians</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="text-2xl font-bold">0</div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Multisig signatories
+                        </p>
                       </CardContent>
                     </Card>
                   </div>
 
+                  {/* Guardians Section */}
                   <div>
-                    <p className="font-medium">Recent Transactions</p>
-                    <p className="text-muted-foreground">No transactions available</p>
+                    <h3 className="font-medium mb-3">Community Guardians</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Guardians are the elected multisig signatories who can initiate and approve transactions.
+                      They are responsible for executing community decisions and managing funds securely.
+                    </p>
+                    <div className="space-y-2">
+                      {farmblock.guardians && farmblock.guardians.length > 0 ? (
+                        farmblock.guardians.map((guardian: any, index: number) => (
+                          <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                <Shield className="h-4 w-4 text-green-700" />
+                              </div>
+                              <div>
+                                <p className="font-medium text-sm">Guardian #{index + 1}</p>
+                                <code className="text-xs text-muted-foreground">{guardian.address}</code>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              Active
+                            </Badge>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Shield className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p>No guardians configured yet</p>
+                          <p className="text-xs">Guardians will be elected through community governance</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Pending Transactions */}
+                  <div>
+                    <h3 className="font-medium mb-3">Pending Transactions</h3>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Transactions that have been proposed but need guardian signatures to execute.
+                    </p>
+                    <div className="space-y-2">
+                      {farmblock.pendingTransactions && farmblock.pendingTransactions.length > 0 ? (
+                        farmblock.pendingTransactions.map((tx: any, index: number) => (
+                          <Card key={index} className="border-orange-200 bg-orange-50">
+                            <CardContent className="p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                <div>
+                                  <p className="font-medium text-sm">{tx.description}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {tx.amount} {tx.currency} • Proposed by {tx.proposer}
+                                  </p>
+                                </div>
+                                <Badge className="bg-orange-100 text-orange-700 text-xs">
+                                  {tx.signatures}/{tx.requiredSignatures} signatures
+                                </Badge>
+                              </div>
+                              <div className="flex gap-2 mt-3">
+                                <Button size="sm" variant="outline">
+                                  Review & Sign
+                                </Button>
+                                <Button size="sm" variant="ghost">
+                                  View Details
+                                </Button>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))
+                      ) : (
+                        <div className="text-center py-6 text-muted-foreground">
+                          <Database className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                          <p>No pending transactions</p>
+                          <p className="text-xs">All transactions are up to date</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Recent Transactions */}
+                  <div>
+                    <h3 className="font-medium mb-3">Recent Transactions</h3>
+                    <div className="space-y-2">
+                      <div className="text-center py-6 text-muted-foreground">
+                        <Coins className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                        <p>No transactions yet</p>
+                        <p className="text-xs">Transaction history will appear here</p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex justify-end">
@@ -619,74 +772,68 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
                       <DialogTrigger asChild>
                         <Button className="flex items-center gap-2">
                           <Plus className="h-4 w-4" />
-                          New Transaction
+                          Propose Transaction
                         </Button>
                       </DialogTrigger>
                       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
-                          <DialogTitle>Create New Transaction</DialogTitle>
+                          <DialogTitle>Propose New Transaction</DialogTitle>
                           <DialogDescription>
-                            Create a new transaction proposal for the FarmBlock Safe multisig wallet.
+                            Create a transaction proposal that requires guardian approval through the Safe multisig.
                           </DialogDescription>
                         </DialogHeader>
                         <div className="py-4">
+                          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded">
+                            <p className="text-sm text-amber-800">
+                              <strong>Note:</strong> This transaction will be submitted to the Safe multisig wallet and requires
+                              approval from the community guardians before execution.
+                            </p>
+                          </div>
+
                           <div className="grid gap-4 mb-4">
                             <Label>Transaction Type</Label>
-                            <div className="grid grid-cols-1 gap-2">
                               <Button
                                 variant={transactionType === "task-pool" ? "default" : "outline"}
                                 className="justify-start h-auto py-3"
                                 onClick={() => setTransactionType("task-pool")}
                               >
                                 <div className="flex flex-col items-start text-left">
-                                  <span className="font-medium">Fund Task Pool</span>
+                                  <span className="font-medium">Task Pool Payout</span>
                                   <span className="text-xs font-normal text-muted-foreground">
-                                    Allocate funds to a task reward pool
+                                    Payout funds to task completion beneficiary
                                   </span>
                                 </div>
                               </Button>
-                              <Button
-                                variant={transactionType === "saving-strategy" ? "default" : "outline"}
-                                className="justify-start h-auto py-3"
-                                onClick={() => setTransactionType("saving-strategy")}
-                              >
-                                <div className="flex flex-col items-start text-left">
-                                  <span className="font-medium">Saving Strategy</span>
-                                  <span className="text-xs font-normal text-muted-foreground">
-                                    Create or fund a stablecoin saving strategy
-                                  </span>
-                                </div>
-                              </Button>
-                            </div>
                           </div>
 
                           {transactionType === "task-pool" && (
                             <div className="space-y-4">
                               <div className="grid gap-2">
-                                <Label htmlFor="pool-select">Select Task Pool</Label>
+                                <Label htmlFor="task-proposal">Select Approved Task Proposal</Label>
                                 <Select>
-                                  <SelectTrigger id="pool-select">
-                                    <SelectValue placeholder="Select a task pool" />
+                                  <SelectTrigger id="task-proposal">
+                                    <SelectValue placeholder="Select a task that passed voting" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {taskPools.map((pool) => (
-                                      <SelectItem key={pool.id} value={pool.id.toString()}>
-                                        {pool.name} (#{pool.id})
-                                      </SelectItem>
-                                    ))}
+                                    {/* Tasks will be populated from approved proposals */}
+                                    <SelectItem value="task-1">Harvest Millet - Ethiopia (23 cUSD)</SelectItem>
+                                    <SelectItem value="task-2">Plant Quinoa - Kenya (50 cUSD)</SelectItem>
                                   </SelectContent>
                                 </Select>
+                                <p className="text-xs text-muted-foreground">
+                                  Only task proposals that have passed voting threshold appear here
+                                </p>
                               </div>
 
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="grid gap-2">
-                                  <Label htmlFor="amount">Amount</Label>
-                                  <Input id="amount" type="number" placeholder="0.00" />
+                                  <Label htmlFor="payout-amount">Payout Amount</Label>
+                                  <Input id="payout-amount" type="number" placeholder="0.00" />
                                 </div>
                                 <div className="grid gap-2">
-                                  <Label htmlFor="currency">Currency</Label>
-                                  <Select defaultValue="cUSD">
-                                    <SelectTrigger id="currency">
+                                  <Label htmlFor="payout-currency">Currency</Label>
+                                  <Select defaultValue={farmblock.stakeCurrency || "cUSD"}>
+                                    <SelectTrigger id="payout-currency">
                                       <SelectValue placeholder="Select currency" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -699,10 +846,132 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
                               </div>
 
                               <div className="grid gap-2">
-                                <Label htmlFor="description">Description</Label>
+                                <Label htmlFor="beneficiary-address">Beneficiary Address</Label>
+                                <Input id="beneficiary-address" placeholder="0x..." />
+                                <p className="text-xs text-muted-foreground">
+                                  The address from the approved task proposal that will receive the funds
+                                </p>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="task-description">Transaction Details</Label>
                                 <Textarea
-                                  id="description"
-                                  placeholder="Describe the purpose of this transaction"
+                                  id="task-description"
+                                  placeholder="Describe this payout (task completion reference, etc)"
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {transactionType === "nft-royalty" && (
+                            <div className="space-y-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-action">Distribution Action</Label>
+                                <Select>
+                                  <SelectTrigger id="royalty-action">
+                                    <SelectValue placeholder="Select action" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="distribute">Distribute to Community</SelectItem>
+                                    <SelectItem value="reinvest">Reinvest in FarmBlock</SelectItem>
+                                    <SelectItem value="reserve">Add to Reserve Fund</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-amount">Amount to Distribute</Label>
+                                <Input id="royalty-amount" type="number" placeholder="0.00" />
+                                <p className="text-xs text-muted-foreground">
+                                  Available royalty balance: Check Safe balance above
+                                </p>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-description">Distribution Details</Label>
+                                <Textarea
+                                  id="royalty-description"
+                                  placeholder="Describe how the royalty funds will be distributed"
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {transactionType === "task-pool" && (
+                            <div className="space-y-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="approved-proposal">Select Approved Proposal</Label>
+                                <Select>
+                                  <SelectTrigger id="approved-proposal">
+                                    <SelectValue placeholder="Select a proposal with voting threshold met" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="prop-1">Plant Quinoa Seeds - John's Team</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="payout-beneficiary">Beneficiary Address</Label>
+                                <Input id="payout-beneficiary" type="text" placeholder="0x1234..." value="0x1234567890123456789012345678901234567890" readOnly />
+                                <p className="text-xs text-muted-foreground">
+                                  Address from the approved proposal
+                                </p>
+                              </div>
+
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="grid gap-2">
+                                  <Label htmlFor="payout-amount">Amount</Label>
+                                  <Input id="payout-amount" type="number" placeholder="50" readOnly value="50" />
+                                </div>
+                                <div className="grid gap-2">
+                                  <Label htmlFor="payout-currency">Currency</Label>
+                                  <Input id="payout-currency" type="text" placeholder="cUSD" readOnly value="cUSD" />
+                                </div>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="payout-description">Transaction Details</Label>
+                                <Textarea
+                                  id="payout-description"
+                                  placeholder="Payment for approved task proposal"
+                                  rows={3}
+                                />
+                              </div>
+                            </div>
+                          )}
+
+                          {transactionType === "nft-royalty" && (
+                            <div className="space-y-4">
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-action">Distribution Action</Label>
+                                <Select>
+                                  <SelectTrigger id="royalty-action">
+                                    <SelectValue placeholder="Select action" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="distribute">Distribute to Community</SelectItem>
+                                    <SelectItem value="reinvest">Reinvest in FarmBlock</SelectItem>
+                                    <SelectItem value="reserve">Add to Reserve Fund</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-amount">Amount to Distribute</Label>
+                                <Input id="royalty-amount" type="number" placeholder="0.00" />
+                                <p className="text-xs text-muted-foreground">
+                                  Available royalty balance: Check Safe balance above
+                                </p>
+                              </div>
+
+                              <div className="grid gap-2">
+                                <Label htmlFor="royalty-description">Distribution Details</Label>
+                                <Textarea
+                                  id="royalty-description"
+                                  placeholder="Describe how the royalty funds will be distributed"
                                   rows={3}
                                 />
                               </div>
@@ -711,67 +980,18 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
 
                           {transactionType === "saving-strategy" && (
                             <div className="space-y-4">
-                              <div className="grid gap-2">
-                                <Label htmlFor="strategy-type">Action</Label>
-                                <Select>
-                                  <SelectTrigger id="strategy-type">
-                                    <SelectValue placeholder="Select action" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="create">Create New Saving Strategy</SelectItem>
-                                    <SelectItem value="fund">Fund Existing Strategy</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid gap-2">
-                                <Label htmlFor="strategy-select">Strategy Type</Label>
-                                <Select>
-                                  <SelectTrigger id="strategy-select">
-                                    <SelectValue placeholder="Select a strategy" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="conservative">Conservative (5.2% APY)</SelectItem>
-                                    <SelectItem value="balanced">Balanced (7.8% APY)</SelectItem>
-                                    <SelectItem value="growth">Growth (9.1% APY)</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="grid gap-2">
-                                  <Label htmlFor="strategy-amount">Amount</Label>
-                                  <Input id="strategy-amount" type="number" placeholder="0.00" />
-                                </div>
-                                <div className="grid gap-2">
-                                  <Label htmlFor="strategy-currency">Currency</Label>
-                                  <Select defaultValue="cUSD">
-                                    <SelectTrigger id="strategy-currency">
-                                      <SelectValue placeholder="Select currency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="cUSD">cUSD</SelectItem>
-                                      <SelectItem value="cEUR">cEUR</SelectItem>
-                                      <SelectItem value="cKES">cKES</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </div>
-
-                              <div className="grid gap-2">
-                                <Label htmlFor="strategy-description">Description</Label>
-                                <Textarea
-                                  id="strategy-description"
-                                  placeholder="Describe the purpose of this strategy"
-                                  rows={3}
-                                />
+                              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded">
+                                <p className="text-sm text-yellow-800">
+                                  <strong>Note:</strong> Saving strategy funding is currently suspended. 
+                                  Please use Task Pool Payout for community payouts.
+                                </p>
                               </div>
                             </div>
                           )}
                         </div>
                         <DialogFooter>
                           <Button type="submit" onClick={handleCreateTransaction}>
-                            {connected ? "Create Transaction" : "Connect Wallet to Create"}
+                            {connected ? "Propose Transaction" : "Connect Wallet to Propose"}
                           </Button>
                         </DialogFooter>
                       </DialogContent>

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Upload, MapPin } from "lucide-react"
+import { Upload } from "lucide-react"
 import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
@@ -21,8 +21,6 @@ export default function CreateFarmBlock() {
   const [formData, setFormData] = useState({
     farmName: "",
     location: "",
-    latitude: "",
-    longitude: "",
     size: "",
     cropType: "",
     description: "",
@@ -58,14 +56,48 @@ export default function CreateFarmBlock() {
       return
     }
 
-    // Here you would integrate with the blockchain to create the FarmBlock
-    console.log("Creating FarmBlock with data:", formData)
-    console.log("Uploaded file:", selectedFile)
+    // Validate required fields
+    if (!formData.farmName || !formData.location || !formData.size || !formData.cropType || !formData.safeWallet) {
+      alert("Please fill in all required fields including Gnosis Safe Wallet address")
+      return
+    }
 
-    // Simulate success and redirect
-    setTimeout(() => {
-      router.push("/dashboard")
-    }, 1500)
+    // Create farmblock data object including file
+    const farmblockData: any = {
+      ...formData,
+      nftPromptFile: selectedFile ? {
+        name: selectedFile.name,
+        size: selectedFile.size,
+        type: selectedFile.type,
+      } : null,
+      createdAt: new Date().toISOString(),
+      creatorAddress: address,
+    }
+
+    try {
+      // Convert file to base64 for storage
+      if (selectedFile) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result as string)
+          reader.readAsDataURL(selectedFile)
+        })
+        farmblockData.nftPromptFileBase64 = base64
+      }
+
+      // Store in localStorage
+      localStorage.setItem("pendingFarmblock", JSON.stringify(farmblockData))
+      
+      // Also store with a unique ID for persistence
+      const farmblockId = `farmblock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      localStorage.setItem(farmblockId, JSON.stringify(farmblockData))
+
+      // Redirect to NFT store
+      router.push("/nft-store")
+    } catch (error) {
+      console.error("Error preparing farmblock data:", error)
+      alert("Error preparing farmblock. Please try again.")
+    }
   }
 
   return (
@@ -113,42 +145,6 @@ export default function CreateFarmBlock() {
                       required
                     />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="latitude">Latitude</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="latitude"
-                          name="latitude"
-                          type="text"
-                          placeholder="e.g. 0.3476"
-                          value={formData.latitude}
-                          onChange={handleChange}
-                          className="pl-9"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="longitude">Longitude</Label>
-                      <div className="relative">
-                        <MapPin className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                          id="longitude"
-                          name="longitude"
-                          type="text"
-                          placeholder="e.g. 32.5825"
-                          value={formData.longitude}
-                          onChange={handleChange}
-                          className="pl-9"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Geo-coordinates will be used to display your farm on the MapBox integration
-                  </p>
 
                   <div className="space-y-2">
                     <Label htmlFor="size">Farm Size (hectares)</Label>

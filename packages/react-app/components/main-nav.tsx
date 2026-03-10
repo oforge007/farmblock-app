@@ -24,7 +24,7 @@ const address = account?.address;
     <div className="z-10 w-full items-center justify-between text-sm flex mb-4 py-3 px-4 border-b">
       <div className="flex items-center gap-3">
         <LogoToHome />
-        <Link href="/map">
+        {/* <Link href="/map">
           <Button
             size="icon"
             variant="ghost"
@@ -33,7 +33,7 @@ const address = account?.address;
             <Globe className="h-4 w-4" />
             <span className="sr-only">Map</span>
           </Button>
-        </Link>
+        </Link> */}
       </div>
 
       <div className="flex items-center gap-2">
@@ -73,8 +73,8 @@ function VerifyLauncher({ address }: { address?: string }) {
         className="h-8 w-8 rounded-full bg-blue-50 text-blue-700 hover:bg-blue-100"
         aria-label="Open verification widget"
       >
-        {/* Use a compact globe icon for the verifier launcher */}
-        <Globe className="h-4 w-4" />
+        {/* Use the Self ZK proof icon for the verifier launcher */}
+        <img src="/images/Self-zk-icon.svg" alt="Self ZK Proof" className="h-4 w-4" />
       </Button>
 
       {open && VerifyComp ? (
