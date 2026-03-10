@@ -1,23 +1,22 @@
 // packages/react-app/app/fxswap/page.tsx
 
-=======
 
-
-
-        title: "Quinoa Planting - John's Team",
-        description: "John Kipchoge and his team will plant 2 hectares of quinoa seeds with premium organic methods",
-        beneficiary: "0x1234567890123456789012345678901234567890",
-        amount: 50,
-        currency: "cUSD",
-        proposedBy: "0xabcd1234...",
-        createdAt: "2023-06-01",
-        votingDeadline: "2023-06-08",
-        status: "active",
-        votes: { for: 35, against: 8 },
-        minimumSupport: 15,
-      },
-    ],
+const proposals = [
+  {
+    title: "Quinoa Planting - John's Team",
+    description: "John Kipchoge and his team will plant 2 hectares of quinoa seeds with premium organic methods",
+    beneficiary: "0x1234567890123456789012345678901234567890",
+    amount: 50,
+    currency: "cUSD",
+    proposedBy: "0xabcd1234...",
+    createdAt: "2023-06-01",
+    votingDeadline: "2023-06-08",
+    status: "active",
+    votes: { for: 35, against: 8 },
+    minimumSupport: 15,
   },
+  // ...other proposals
+];
   {
     id: 2,
     title: "Harvest Millet",
