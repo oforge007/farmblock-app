@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -28,6 +28,7 @@ import { RegenerativeImage } from "@/components/regenerative-image"
 import { Users, Database, Coins, Shield, Plus } from "lucide-react"
 import { createThirdwebClient } from "thirdweb";
 import { useActiveAccount, ConnectButton } from "thirdweb/react";
+import { ethers } from "ethers";
 
 
 const client = createThirdwebClient({
@@ -143,11 +144,72 @@ const tasks = [
   },
 ]
 
-interface FarmBlockPageProps {
-  params: {
-    id: string;
-  };
-}
+const sampleFarmblocksForIdRoute = [
+  {
+    id: "1",
+    name: "Nairobi Farmers Circle",
+    location: "Kenya",
+    image: "/images/solar-pump-farm.jpeg",
+    members: 24,
+    pools: 3,
+    staked: "1,250.00",
+    registrationStake: "5.1",
+    stakeCurrency: "cUSD",
+    description: "A community of regenerative farmers building local food resilience.",
+    mission: "Integrate regenerative agroforestry with shared cUSD stablecoin governance.",
+    governanceRules: "On-chain voting in progress. Minimum 15% quorum required.",
+    safeWallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+    nftDropAddress: "",
+  },
+  {
+    id: "2",
+    name: "Addis Ababa Growers",
+    location: "Ethiopia",
+    image: "/images/greenhouse-structure.jpeg",
+    members: 18,
+    pools: 2,
+    staked: "850.50",
+    registrationStake: "5.1",
+    stakeCurrency: "cUSD",
+    description: "Smallholder network sharing resources for resilient value chains.",
+    mission: "Build equitable community funding through stablecoin yield and NFTs.",
+    governanceRules: "One token, one voice; decisions require 60% approval.",
+    safeWallet: "0x8a21C9D5456C2f6F0a7F5b9C83f9974450F4168d",
+    nftDropAddress: "",
+  },
+  {
+    id: "3",
+    name: "Arusha Mountain Farmers",
+    location: "Tanzania",
+    image: "/images/onion-field.jpeg",
+    members: 15,
+    pools: 1,
+    staked: "625.75",
+    registrationStake: "5.1",
+    stakeCurrency: "cUSD",
+    description: "Highland coop focusing on climate resilient crops and agroecology.",
+    mission: "Open-source farmblock governance with multisig transparency.",
+    governanceRules: "Minimum three guardian signatures for disbursement.",
+    safeWallet: "0x3a45C9D5456C2f6F0a7F5b9C83f9974450F41234",
+    nftDropAddress: "",
+  },
+  {
+    id: "4",
+    name: "Kampala Riverside Plots",
+    location: "Uganda",
+    image: "/images/corn-field.jpeg",
+    members: 12,
+    pools: 2,
+    staked: "450.25",
+    registrationStake: "5.1",
+    stakeCurrency: "cUSD",
+    description: "Urban market gardeners creating transparent supply chain finance.",
+    mission: "Scale local regenerative management through tokenized community ownership.",
+    governanceRules: "All major allocations require two thirds approval.",
+    safeWallet: "0x1f2d35Cc6634C0532925a3b844Bc454e4438f44a",
+    nftDropAddress: "",
+  },
+]
 
 interface FarmblockData {
   farmName: string;
@@ -160,6 +222,7 @@ interface FarmblockData {
   stakeCurrency: string;
   mission?: string;
   governanceRules?: string;
+  safeOwners?: string[];
   nftPromptFile?: {
     name: string;
     size: number;
@@ -171,7 +234,9 @@ interface FarmblockData {
   nftDropAddress?: string;
 }
 
-export default function FarmBlockPage({ params }: FarmBlockPageProps) {
+export default function FarmBlockPage() {
+  const params = useParams()
+  const routeId = typeof params?.id === "string" ? params.id : ""
   const [farmblock, setFarmblock] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState("overview")
   const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
@@ -194,105 +259,143 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
   const address = account?.address;
 
   useEffect(() => {
-    if (!params.id) {
-      setError("Invalid FarmBlock ID.");
-      setIsLoading(false);
-      return;
+    const resolveFarmblockId = () => {
+      if (routeId && routeId.trim()) return routeId.trim()
+      if (typeof window === "undefined") return ""
+
+      const pendingFarmblockString = localStorage.getItem("pendingFarmblock")
+      if (pendingFarmblockString) {
+        try {
+          const pendingFarmblock = JSON.parse(pendingFarmblockString)
+          if (pendingFarmblock?.id) return pendingFarmblock.id
+        } catch (err) {
+          console.warn("Failed to parse pendingFarmblock while resolving ID", err)
+        }
+      }
+
+      const farmblocksString = localStorage.getItem("farmblocks")
+      if (farmblocksString) {
+        try {
+          const farmblocks = JSON.parse(farmblocksString)
+          if (Array.isArray(farmblocks) && farmblocks.length > 0 && farmblocks[0]?.id) {
+            return farmblocks[0].id
+          }
+        } catch (err) {
+          console.warn("Failed to parse farmblocks while resolving ID", err)
+        }
+      }
+
+      return ""
     }
 
-    // Check for farmblock data from create-farmblock page
-    const storedFarmblock = localStorage.getItem("pendingFarmblock");
-    const storedCreatedFarmblock = localStorage.getItem(`farmblock_${params.id}`);
+    const farmblockId = resolveFarmblockId()
 
-    if (storedFarmblock) {
+    if (!farmblockId) {
+      setError("Invalid FarmBlock ID. Make sure you are visiting a specific FarmBlock URL (e.g. /farmblock/<id>).")
+      setIsLoading(false)
+      return
+    }
+
+    const fetchSafeOwners = async (safeAddress: string) => {
       try {
-        const data: FarmblockData = JSON.parse(storedFarmblock);
-        setFarmblockData(data);
-
-        // Create farmblock object from the data
-        const fetchedFarmblock = {
-          id: params.id,
-          name: data.farmName,
-          location: data.location,
-          image: "/images/sustainable-farm.jpeg", // Default image, could be enhanced later
-          members: 0,
-          pools: 1,
-          staked: "0",
-          registrationStake: data.registrationStake,
-          stakeCurrency: data.stakeCurrency,
-          description: data.description,
-          mission: data.mission || "Empowering communities through sustainable agriculture and transparent governance.",
-          governanceRules: data.governanceRules ||
-            "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
-          safeWallet: data.safeWallet,
-          nftDropAddress: data.nftDropAddress,
-          guardians: [], // Will be populated from Safe contract
-          pendingTransactions: [], // Will be populated from Safe contract
-        };
-
-        setFarmblock(fetchedFarmblock);
-        setIsLoading(false);
-      } catch (err) {
-        console.error("Error parsing farmblock data:", err);
-        setError("Failed to load FarmBlock data from creation.");
-        setIsLoading(false);
+        const rpc = process.env.NEXT_PUBLIC_CELO_SEPOLIA_RPC || "https://forno.celo.org"
+        const provider = new ethers.JsonRpcProvider(rpc)
+        const safeAbi = ["function getOwners() view returns (address[])"]
+        const safe = new ethers.Contract(safeAddress, safeAbi, provider)
+        return await safe.getOwners()
+      } catch (error) {
+        console.warn("Could not fetch Safe owners:", error)
+        return []
       }
-    } else if (storedCreatedFarmblock) {
-      try {
-        const data: FarmblockData = JSON.parse(storedCreatedFarmblock);
-        setFarmblockData(data);
+    }
 
-        const fetchedFarmblock = {
-          id: params.id,
-          name: data.farmName,
-          location: data.location,
+    const initFarmblock = async () => {
+      const storedFarmblock = localStorage.getItem("pendingFarmblock");
+      const storedCreatedFarmblock = localStorage.getItem(`farmblock_${farmblockId}`);
+
+      let data: FarmblockData | null = null
+
+      if (storedCreatedFarmblock) {
+        data = JSON.parse(storedCreatedFarmblock)
+      } else if (storedFarmblock) {
+        data = JSON.parse(storedFarmblock)
+      }
+
+      if (!data) {
+        const sample = sampleFarmblocksForIdRoute.find((item) => item.id === farmblockId)
+        const fetchedFarmblock = sample
+          ? {
+              id: sample.id,
+              name: sample.name,
+              location: sample.location,
+              image: sample.image,
+              members: sample.members,
+              pools: sample.pools,
+              staked: sample.staked,
+              registrationStake: sample.registrationStake,
+              stakeCurrency: sample.stakeCurrency,
+              description: sample.description,
+              mission: sample.mission,
+              governanceRules: sample.governanceRules,
+              safeWallet: sample.safeWallet,
+              nftDropAddress: sample.nftDropAddress,
+              guardians: [],
+              pendingTransactions: [],
+            }
+          : {
+              id: farmblockId,
+              name: "OxFarmBlock",
+          location: "Kenya",
           image: "/images/sustainable-farm.jpeg",
           members: 0,
           pools: 1,
           staked: "0",
-          registrationStake: data.registrationStake,
-          stakeCurrency: data.stakeCurrency,
-          description: data.description,
-          mission: data.mission || "Empowering communities through sustainable agriculture and transparent governance.",
-          governanceRules: data.governanceRules ||
+          registrationStake: "5.1",
+          stakeCurrency: "cUSD",
+          description: "A placeholder farmblock generated when no data exists.",
+          mission: "Empowering communities through sustainable agriculture and transparent governance.",
+          governanceRules:
             "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
-          safeWallet: data.safeWallet,
-          nftDropAddress: data.nftDropAddress,
+          safeWallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+          nftDropAddress: "",
           guardians: [],
           pendingTransactions: [],
         };
 
         setFarmblock(fetchedFarmblock);
         setIsLoading(false);
-      } catch (err) {
-        console.error("Error parsing stored farmblock data:", err);
-        setError("Failed to load FarmBlock data.");
-        setIsLoading(false);
+        return
       }
-    } else {
-      // Fallback to mock data if no real data exists
+
+      setFarmblockData(data)
+      const owners = data.safeOwners ?? (data.safeWallet ? await fetchSafeOwners(data.safeWallet) : [])
+
       const fetchedFarmblock = {
-        id: params.id,
-        name: "OxFarmBlock",
-        location: "Kenya",
+        id: farmblockId,
+        name: data.farmName,
+        location: data.location,
         image: "/images/sustainable-farm.jpeg",
         members: 0,
         pools: 1,
         staked: "0",
-        registrationStake: "5.1",
-        stakeCurrency: "cUSD",
-        description: "A community of farmers in Kenya focused on sustainable agriculture and transparent governance.",
-        mission:
-          "Our mission is to empower local farmers through sustainable agricultural practices, transparent governance, and fair trade. We aim to combat hunger and drought by implementing innovative farming techniques and fostering community collaboration.",
+        registrationStake: data.registrationStake,
+        stakeCurrency: data.stakeCurrency,
+        description: data.description,
+        mission: data.mission || "Empowering communities through sustainable agriculture and transparent governance.",
         governanceRules:
+          data.governanceRules ||
           "1. All community decisions require a minimum of 15% support to pass.\n2. Task proposals must include clear deliverables and timelines.\n3. Funding requests must specify exact amounts and beneficiaries.\n4. Guardians are elected by community vote and serve 6-month terms.\n5. All financial transactions are executed through the community Safe and require multi-signature approval.",
-        safeWallet: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-        guardians: [],
+        safeWallet: data.safeWallet,
+        nftDropAddress: data.nftDropAddress,
+        guardians: owners.map((address: string) => ({ address, name: address, role: "safe owner", transactions: 0 })),
         pendingTransactions: [],
       };
+
       setFarmblock(fetchedFarmblock);
       setIsLoading(false);
     }
+
+    initFarmblock()
   }, [params.id]);
 
   const handleRegisterInCommunity = async () => {
@@ -383,7 +486,7 @@ export default function FarmBlockPage({ params }: FarmBlockPageProps) {
             </div>
 
             <Button className="w-full" onClick={() => router.push('/nft-store')}>
-              Register in community - Buy NFT
+              Register in community - Collect NFT
             </Button>
           </div>
         </div>

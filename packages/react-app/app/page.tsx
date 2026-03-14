@@ -1,3 +1,5 @@
+"use client"
+
 import { FarmBlockCard } from "@/components/farmblock-card"
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
@@ -6,9 +8,10 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, Filter, Leaf } from "lucide-react"
 import { RegenerativeImage } from "@/components/regenerative-image"
+import { useEffect, useState } from "react"
 
 // Sample farmblock data with unique values and new images
-const farmblocks = [
+const initialFarmblocks = [
   {
     id: 1,
     name: "Nairobi Farmers Circle",
@@ -52,16 +55,62 @@ const farmblocks = [
 ]
 
 export default function Home() {
+  const [farmblocks, setFarmblocks] = useState(initialFarmblocks)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  const filteredFarmblocks = farmblocks.filter((farmblock) => {
+    const query = searchTerm.trim().toLowerCase()
+    if (!query) return true
+    return (
+      farmblock.name.toLowerCase().includes(query) ||
+      farmblock.location.toLowerCase().includes(query) ||
+      farmblock.crops.some((crop) => crop.toLowerCase().includes(query))
+    )
+  })
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+
+    const stored = localStorage.getItem("farmblocks")
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) {
+          const mapped = parsed.map((entry: any) => ({
+            id: entry.id,
+            name: entry.farmName,
+            location: entry.location,
+            image: entry.image || "/images/sustainable-farm.jpeg",
+            members: entry.members ?? 0,
+            pools: entry.pools ?? 1,
+            staked: entry.registrationStake ?? "0",
+            crops: [entry.cropType || "Unknown"],
+          }))
+
+          setFarmblocks([...initialFarmblocks, ...mapped])
+        }
+      } catch (err) {
+        console.warn("Could not parse farmblocks from localStorage", err)
+      }
+    }
+  }, [])
+
   return (
     <main className="flex min-h-screen flex-col items-center pb-20">
-      <MainNav showBackButton={false} />
+      <MainNav />
 
       <div className="w-full max-w-5xl px-4">
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             <div className="relative flex-1 w-full">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input type="text" placeholder="Search FarmBlocks..." className="pl-8 pr-10" />
+              <Input
+                type="text"
+                placeholder="Search FarmBlocks..."
+                className="pl-8 pr-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
               <Button variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7">
                 <Filter className="h-4 w-4" />
               </Button>
@@ -93,9 +142,13 @@ export default function Home() {
         <h2 className="text-2xl font-bold mb-4">Discover FarmBlocks</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
-          {farmblocks.map((farmblock) => (
-            <FarmBlockCard key={farmblock.id} farmblock={farmblock} />
-          ))}
+          {filteredFarmblocks.length > 0 ? (
+            filteredFarmblocks.map((farmblock) => (
+              <FarmBlockCard key={farmblock.id} farmblock={farmblock} />
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No FarmBlocks found for this filter.</p>
+          )}
         </div>
       </div>
 

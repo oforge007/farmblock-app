@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { MainNav } from "@/components/main-nav";
 import { FooterMenu } from "@/components/footer-menu";
 import { Input } from "@/components/ui/input";
@@ -8,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { client } from "@/lib/thirdweb-client";
 import { useActiveAccount } from "thirdweb/react";
+import { ethers } from "ethers";
 
 interface FarmblockData {
   farmName: string;
@@ -20,6 +22,7 @@ interface FarmblockData {
   stakeCurrency: string;
   mission?: string;
   governanceRules?: string;
+  safeOwners?: string[];
   nftPromptFile?: {
     name: string;
     size: number;
@@ -28,6 +31,24 @@ interface FarmblockData {
   nftPromptFileBase64?: string;
   createdAt: string;
   creatorAddress?: string;
+  id?: string;
+  nftDropAddress?: string;
+}
+
+const farmBlockRegistryAbi = [
+  "function registerFarmBlock(bytes32 id, address safeWallet, address nftDrop, string name)",
+  "function updateNFTDrop(bytes32 id, address nftDrop)",
+  "function verifyFarmBlock(bytes32 id)",
+  "function rejectFarmBlock(bytes32 id, string reason)",
+  "event FarmBlockRegistered(bytes32 indexed id, address indexed safeWallet, address nftDrop, string name)",
+  "event FarmBlockVerified(bytes32 indexed id, address indexed owner)",
+  "event FarmBlockRejected(bytes32 indexed id, address indexed owner, string reason)",
+]
+
+const registryAddress = process.env.NEXT_PUBLIC_FARMBLOCK_REGISTRY_ADDRESS || ""
+
+function farmblockIdHash(id: string) {
+  return ethers.id(id)
 }
 
 export default function NFTDropPage() {
@@ -44,23 +65,70 @@ export default function NFTDropPage() {
   const [hasDeployed, setHasDeployed] = useState(false);
 
   // Load farmblock data from localStorage on mount
+  const searchParams = useSearchParams();
+
   useEffect(() => {
-    const stored = localStorage.getItem("pendingFarmblock");
-    if (stored) {
-      try {
-        const data = JSON.parse(stored) as FarmblockData;
-        setFarmblockData(data);
-        setStatus(`Loaded farmblock: ${data.farmName}. Auto-deploying NFT drop...`);
-        // Automatically deploy NFT drop when farmblock data is loaded
-        deployNFTDropAuto(data);
-      } catch (error) {
-        console.error("Error parsing farmblock data:", error);
-        setStatus("Error loading farmblock data. Please start over from Create FarmBlock.");
+    const loadFarmblockData = async () => {
+      const farmblockId = searchParams?.get("farmblockId")
+      let dataString: string | null = null
+
+      if (farmblockId) {
+        dataString = localStorage.getItem(farmblockId)
+        if (!dataString) {
+          dataString = localStorage.getItem("pendingFarmblock")
+        }
+      } else {
+        dataString = localStorage.getItem("pendingFarmblock")
       }
-    } else {
-      setStatus("No farmblock data found. Please create a farmblock first.");
+
+      if (!dataString) {
+        setStatus("No farmblock data found. Please create a farmblock first.")
+        return
+      }
+
+      try {
+        const data = JSON.parse(dataString) as FarmblockData
+
+        // live chain owner refresh for robust safety
+        if (data.safeWallet) {
+          try {
+            const rpc = process.env.NEXT_PUBLIC_CELO_SEPOLIA_RPC || "https://forno.celo.org"
+            const provider = new ethers.JsonRpcProvider(rpc)
+            const safeAbi = ["function getOwners() view returns (address[])"]
+            const safe = new ethers.Contract(data.safeWallet, safeAbi, provider)
+            const liveOwners = await safe.getOwners()
+            data.safeOwners = liveOwners
+          } catch (chainErr) {
+            console.warn("Failed to read safe owners on chain", chainErr)
+          }
+        }
+
+        setFarmblockData(data)
+
+        const owners = data.safeOwners || []
+        if (owners.length === 0) {
+          setStatus("No Safe owners found for this farmblock. Confirm safe wallet valid on Celo Sepolia.")
+          return
+        }
+
+        const current = address?.toLowerCase() || ""
+        const isCurrentSigner = owners.map((s: string) => s.toLowerCase()).includes(current)
+
+        if (!isCurrentSigner) {
+          setStatus("Warning: Current wallet is not a Safe owner; connect an owner to proceed.")
+          return
+        }
+
+        setStatus(`Loaded farmblock: ${data.farmName}. Auto-deploying NFT drop...`)
+        deployNFTDropAuto(data)
+      } catch (error) {
+        console.error("Error parsing farmblock data:", error)
+        setStatus("Error loading farmblock data. Please start over from Create FarmBlock.")
+      }
     }
-  }, []);
+
+    loadFarmblockData()
+  }, [address, searchParams])
 
   useEffect(() => {
     if (activeAddress) {
@@ -102,7 +170,15 @@ export default function NFTDropPage() {
     if (!farmblockData) return setStatus("No farmblock data found");
     if (!farmblockData.safeWallet) return setStatus("Safe wallet address is required");
 
-    await deployNFTDropAuto(farmblockData);
+    const owners = farmblockData.safeOwners || []
+    const isCurrentSigner = owners.map((s: string) => s.toLowerCase()).includes(address.toLowerCase())
+
+    if (!isCurrentSigner) {
+      setStatus("You must connect a multisig owner wallet listed on this FarmBlock Safe to deploy the drop.")
+      return
+    }
+
+    await deployNFTDropAuto(farmblockData)
   };
 
   const deployNFTDropAuto = async (fbData: FarmblockData) => {
@@ -155,6 +231,29 @@ export default function NFTDropPage() {
 
       setNftDropAddress(deployedAddress);
       setFarmblockData(fbData);
+
+      // Save mapping of farmblock -> NFT drop contract on client and local storage
+      if (fbData.id) {
+        const existingMappings = JSON.parse(localStorage.getItem("nftDropMappings") || "{}")
+        existingMappings[fbData.id] = deployedAddress
+        localStorage.setItem("nftDropMappings", JSON.stringify(existingMappings))
+        localStorage.setItem(`farmblock_${fbData.id}_nftDrop`, deployedAddress)
+
+        // On-chain registry update (Celo Sepolia)
+        if (registryAddress && typeof window !== "undefined" && (window as any).ethereum) {
+          try {
+            const provider = new ethers.BrowserProvider((window as any).ethereum)
+            const signer = await provider.getSigner()
+            const registry = new ethers.Contract(registryAddress, farmBlockRegistryAbi, signer)
+            const onchainId = farmblockIdHash(fbData.id)
+            await registry.registerFarmBlock(onchainId, fbData.safeWallet, deployedAddress, fbData.farmName)
+            setStatus(`✅ FarmBlock registered on-chain (${registryAddress})`)
+          } catch (registryErr) {
+            console.warn("Failed to register farmblock on chain", registryErr)
+            setStatus("Warning: Could not register FarmBlock to on-chain registry (check wallet and network)")
+          }
+        }
+      }
 
       // Now mint the initial NFT with the unique metadata
       await mintInitialNFT(deployedAddress, nftMetadata, fbData);
@@ -214,6 +313,14 @@ export default function NFTDropPage() {
     if (!address) return setStatus("Connect wallet to mint");
     if (!farmblockData) return setStatus("No farmblock data available");
 
+    const owners = farmblockData.safeOwners || []
+    const isCurrentSigner = owners.map((s: string) => s.toLowerCase()).includes(address.toLowerCase())
+
+    if (!isCurrentSigner) {
+      setStatus("You must connect a multisig owner wallet listed for this FarmBlock Safe to mint.")
+      return
+    }
+
     const dropAddress = nftDropAddress || activeAddress;
     setStatus(`Attempting to mint NFT (${farmblockData.stakeCurrency} ${farmblockData.registrationStake})...`);
     
@@ -238,6 +345,56 @@ export default function NFTDropPage() {
       setStatus("Mint failed: " + (err?.message ?? String(err)));
     }
   };
+
+  const handleVerifyFarmblock = async () => {
+    if (!registryAddress) {
+      setStatus("Registry address is not configured")
+      return
+    }
+    if (!address) {
+      setStatus("Connect wallet to verify")
+      return
+    }
+    if (!farmblockData?.id) {
+      setStatus("FarmBlock ID missing")
+      return
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum)
+      const signer = await provider.getSigner()
+      const registry = new ethers.Contract(registryAddress, farmBlockRegistryAbi, signer)
+      await registry.verifyFarmBlock(farmblockIdHash(farmblockData.id))
+      setStatus("FarmBlock verified on-chain")
+    } catch (err: any) {
+      setStatus("Failed to verify: " + (err?.message ?? String(err)))
+    }
+  }
+
+  const handleRejectFarmblock = async (reason = "Not approved") => {
+    if (!registryAddress) {
+      setStatus("Registry address is not configured")
+      return
+    }
+    if (!address) {
+      setStatus("Connect wallet to reject")
+      return
+    }
+    if (!farmblockData?.id) {
+      setStatus("FarmBlock ID missing")
+      return
+    }
+
+    try {
+      const provider = new ethers.BrowserProvider((window as any).ethereum)
+      const signer = await provider.getSigner()
+      const registry = new ethers.Contract(registryAddress, farmBlockRegistryAbi, signer)
+      await registry.rejectFarmBlock(farmblockIdHash(farmblockData.id), reason)
+      setStatus("FarmBlock reject signal stored on-chain")
+    } catch (err: any) {
+      setStatus("Failed to reject: " + (err?.message ?? String(err)))
+    }
+  }
 
   return (
     <main className="flex min-h-screen flex-col items-center pb-20">
@@ -305,6 +462,15 @@ export default function NFTDropPage() {
                 </div>
               )}
 
+              <div className="flex items-center gap-2">
+                <Button onClick={handleVerifyFarmblock} variant="outline" size="sm">
+                  Verify on-chain
+                </Button>
+                <Button onClick={() => handleRejectFarmblock("Owner rejection")} variant="ghost" size="sm">
+                  Reject on-chain
+                </Button>
+              </div>
+
               <div className="flex gap-2">
                 <Input 
                   placeholder="Or paste existing NFT drop address" 
@@ -315,6 +481,7 @@ export default function NFTDropPage() {
               </div>
 
               <div className="text-sm text-muted-foreground">Connected wallet: {address ?? "Not connected"}</div>
+              <div className="text-sm text-muted-foreground">Safe owners: {farmblockData?.safeOwners?.join(", ") || "None"}</div>
               {status ? (
                 <div className={`mt-2 text-sm whitespace-pre-wrap ${status.includes("failed") || status.includes("Failed") ? "text-red-600" : "text-blue-600"}`}>
                   {status}

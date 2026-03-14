@@ -37,12 +37,15 @@ const address = account?.address;
       </div>
 
       <div className="flex items-center gap-2">
-        <Link href="/create-farmblock">
-          <Button size="sm" className="flex items-center gap-1">
-            <Plus className="h-4 w-4" />
-            <span className="hidden sm:inline">Create FarmBlock</span>
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/create-farmblock">
+            <Button size="sm" className="flex items-center gap-1">
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">Create FarmBlock</span>
+            </Button>
+          </Link>
+
+        </div>
 
         <ConnectButton client={client} />
         {/* Icon button that loads the Verify widget on demand */}

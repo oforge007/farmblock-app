@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -15,6 +15,7 @@ import { useWallet } from "@/hooks/use-minipay"
 import { MainNav } from "@/components/main-nav"
 import { FooterMenu } from "@/components/footer-menu"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ethers } from "ethers"
 
 export default function CreateFarmBlock() {
   const router = useRouter()
@@ -30,16 +31,40 @@ export default function CreateFarmBlock() {
     governanceRules: "", // Governance rules
     stakeCurrency: "cUSD",
   })
+  const [safeOwners, setSafeOwners] = useState<string[]>([])
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const { connected, connect, address } = useWallet()
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = async (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
+
+    if (name === "safeWallet") {
+      await fetchSafeOwners(value)
+    }
   }
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
+  }
+
+  const fetchSafeOwners = async (safeAddress: string) => {
+    if (!safeAddress || !ethers.utils.isAddress(safeAddress)) {
+      setSafeOwners([])
+      return
+    }
+
+    try {
+      const rpc = process.env.NEXT_PUBLIC_CELO_SEPOLIA_RPC || "https://forno.celo.org"
+      const provider = new ethers.JsonRpcProvider(rpc)
+      const safeAbi = ["function getOwners() view returns (address[])", "function getThreshold() view returns (uint256)"]
+      const safe = new ethers.Contract(safeAddress, safeAbi, provider)
+      const owners: string[] = await safe.getOwners()
+      setSafeOwners(owners)
+    } catch (error) {
+      console.error("Could not fetch Safe owners", error)
+      setSafeOwners([])
+    }
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,18 +83,29 @@ export default function CreateFarmBlock() {
 
     // Validate required fields
     if (!formData.farmName || !formData.location || !formData.size || !formData.cropType || !formData.safeWallet) {
-      alert("Please fill in all required fields including Gnosis Safe Wallet address")
+      alert("Please fill in all required fields including Gnosis Safe Wallet")
+      return
+    }
+
+    if (safeOwners.length === 0) {
+      alert("Safe owners not found; ensure the Gnosis Safe address is valid on Celo Sepolia")
       return
     }
 
     // Create farmblock data object including file
+    const farmblockId = `farmblock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
     const farmblockData: any = {
       ...formData,
-      nftPromptFile: selectedFile ? {
-        name: selectedFile.name,
-        size: selectedFile.size,
-        type: selectedFile.type,
-      } : null,
+      id: farmblockId,
+      safeOwners,
+      nftPromptFile: selectedFile
+        ? {
+            name: selectedFile.name,
+            size: selectedFile.size,
+            type: selectedFile.type,
+          }
+        : null,
       createdAt: new Date().toISOString(),
       creatorAddress: address,
     }
@@ -87,13 +123,17 @@ export default function CreateFarmBlock() {
 
       // Store in localStorage
       localStorage.setItem("pendingFarmblock", JSON.stringify(farmblockData))
-      
-      // Also store with a unique ID for persistence
-      const farmblockId = `farmblock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+      // Also store farmblock list for display and direct access
+      const existingFarmblocks = localStorage.getItem("farmblocks")
+      const farmblocksArray = existingFarmblocks ? JSON.parse(existingFarmblocks) : []
+      localStorage.setItem("farmblocks", JSON.stringify([...farmblocksArray, farmblockData]))
+
+      // Store with a unique ID for lookup
       localStorage.setItem(farmblockId, JSON.stringify(farmblockData))
 
-      // Redirect to NFT store
-      router.push("/nft-store")
+      // Redirect to NFT store with farmblock id to connect records
+      router.push(`/nft-store?farmblockId=${farmblockId}`)
     } catch (error) {
       console.error("Error preparing farmblock data:", error)
       alert("Error preparing farmblock. Please try again.")
@@ -205,6 +245,15 @@ export default function CreateFarmBlock() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label>Safe Owners</Label>
+                    <div className="text-sm text-muted-foreground">
+                      {safeOwners.length === 0
+                        ? "Enter a Safe wallet address to load owner signatories"
+                        : safeOwners.join(", ")}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="registrationStake">Registration Stake</Label>
                     <div className="flex gap-2">
                       <Input
@@ -231,7 +280,7 @@ export default function CreateFarmBlock() {
                       </Select>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      This is the amount new members will need to stake to join your FarmBlock community
+                      This is the amount new members will need to stake to own NFT and join your FarmBlock community
                     </p>
                   </div>
 
@@ -310,7 +359,7 @@ export default function CreateFarmBlock() {
           </CardContent>
           <CardFooter>
             <Button onClick={handleSubmit} className="w-full">
-              {connected ? "Create FarmBlock" : "Proof Self and Create FarmBlock"}
+              {connected ? "Create FarmBlock" : "Verify Self and Create FarmBlock"}
             </Button>
           </CardFooter>
         </Card>

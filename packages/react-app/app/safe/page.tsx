@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
+import { ethers } from "ethers"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -102,26 +103,105 @@ const guardians = [
 
 export default function FarmBlockSafe() {
   const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
-  const { connected, connect } = useWallet()
+  const [safeAddress, setSafeAddress] = useState("")
+  const [safeOwners, setSafeOwners] = useState<string[]>([])
+  const [safeThreshold, setSafeThreshold] = useState<number | null>(null)
+  const [safeEvents, setSafeEvents] = useState<any[]>([])
+  const [safeStatus, setSafeStatus] = useState<string | null>(null)
+  const { connected, connect, address } = useWallet()
 
-  const handleApprove = async (transactionId) => {
-    if (!connected) {
-      await connect()
+  const loadSafeData = async () => {
+    if (!safeAddress || !ethers.isAddress(safeAddress)) {
+      setSafeStatus("Invalid Safe address")
       return
     }
 
-    // Here you would integrate with the blockchain to approve the transaction
-    alert(`Transaction ${transactionId} approved! Please confirm in your wallet.`)
+    try {
+      setSafeStatus("Connecting to Safe on Celo Sepolia...")
+      const rpc = process.env.NEXT_PUBLIC_CELO_SEPOLIA_RPC || "https://forno.celo.org"
+      const provider = new ethers.JsonRpcProvider(rpc)
+      const safeAbi = [
+        "function getOwners() view returns (address[])",
+        "function getThreshold() view returns (uint256)",
+        "function isOwner(address) view returns (bool)",
+        "event ExecutionSuccess(bytes32 txHash)",
+        "event ExecutionFailure(bytes32 txHash)",
+        "event ApproveHash(address owner, bytes32 approvedHash)",
+      ]
+      const safe = new ethers.Contract(safeAddress, safeAbi, provider)
+      const owners: string[] = await safe.getOwners()
+      const threshold: number = Number(await safe.getThreshold())
+
+      setSafeOwners(owners)
+      setSafeThreshold(threshold)
+      setSafeStatus(`Safe loaded. Owners: ${owners.length}, Threshold: ${threshold}`)
+
+      const now = Math.floor(Date.now() / 1000)
+      const oneWeekAgo = now - 7 * 24 * 3600
+      const executionSuccessTopic = ethers.id("ExecutionSuccess(bytes32)")
+      const executionFailTopic = ethers.id("ExecutionFailure(bytes32)")
+      const approvalTopic = ethers.id("ApproveHash(address,bytes32)")
+
+      const logs = await provider.getLogs({
+        address: safeAddress,
+        fromBlock: "earliest",
+        toBlock: "latest",
+        topics: [ [executionSuccessTopic, executionFailTopic, approvalTopic] ],
+      })
+
+      setSafeEvents(logs.map((log) => ({
+        transactionHash: log.transactionHash,
+        eventName:
+          log.topics[0] === executionSuccessTopic
+            ? "ExecutionSuccess"
+            : log.topics[0] === executionFailTopic
+            ? "ExecutionFailure"
+            : "ApproveHash",
+        data: log.data,
+        blockNumber: log.blockNumber,
+      })))
+    } catch (error) {
+      console.error("Safe load error", error)
+      setSafeStatus("Failed to load Safe data")
+    }
   }
 
-  const handleReject = async (transactionId) => {
+  const handleApprove = async (transactionHash: string | number) => {
+    const hashValue = transactionHash.toString()
     if (!connected) {
       await connect()
       return
     }
 
-    // Here you would integrate with the blockchain to reject the transaction
-    alert(`Transaction ${transactionId} rejected! Please confirm in your wallet.`)
+    if (!safeAddress || !ethers.isAddress(safeAddress)) {
+      alert("Invalid Safe address")
+      return
+    }
+
+    try {
+      const rpc = process.env.NEXT_PUBLIC_CELO_SEPOLIA_RPC || "https://forno.celo.org"
+      const provider = new ethers.JsonRpcProvider(rpc)
+      const signer = await provider.getSigner(address || "")
+      const safeAbi = ["function approveHash(bytes32 hash)"]
+      const safe = new ethers.Contract(safeAddress, safeAbi, signer)
+      await safe.approveHash(hashValue)
+      alert(`Approved hash ${hashValue} on Safe`)
+      loadSafeData()
+    } catch (err) {
+      console.error(err)
+      alert("Approve failed, make sure wallet is connected as Safe owner")
+    }
+  }
+
+  const handleReject = async (transactionHash: string | number) => {
+    const hashValue = transactionHash.toString()
+    if (!connected) {
+      await connect()
+      return
+    }
+
+    // For Gnosis Safe, rejection is normally an absence of approval; track locally
+    alert(`Recorded rejection for hash ${transactionHash}. No on-chain action was taken.`)
   }
 
   const handleCreateTransaction = async () => {
@@ -142,72 +222,78 @@ export default function FarmBlockSafe() {
           <Leaf className="h-6 w-6 text-green-600" />
           <p className="font-bold text-xl">FarmBlock</p>
         </Link>
-        <div className="flex items-center gap-4">
-          <Link href="/">
-            <Button variant="outline" className="flex items-center gap-2">
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </Button>
-          </Link>
-          <Dialog open={newTransactionDialogOpen} onOpenChange={setNewTransactionDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                New Transaction
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
-              <DialogHeader>
-                <DialogTitle>Create New Transaction</DialogTitle>
-                <DialogDescription>
-                  Create a new transaction proposal for the FarmBlock Safe multisig wallet.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="tx-title">Title</Label>
-                  <Input id="tx-title" placeholder="Enter transaction title" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="tx-description">Description</Label>
-                  <Textarea id="tx-description" placeholder="Describe the purpose of this transaction" rows={3} />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="tx-recipient">Recipient Address</Label>
-                  <Input id="tx-recipient" placeholder="0x..." />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="tx-amount">Amount</Label>
-                    <Input id="tx-amount" type="number" placeholder="0.00" />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="tx-currency">Currency</Label>
-                    <Select defaultValue="cUSD">
-                      <SelectTrigger id="tx-currency">
-                        <SelectValue placeholder="Select currency" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cUSD">cUSD</SelectItem>
-                        <SelectItem value="cEUR">cEUR</SelectItem>
-                        <SelectItem value="cKES">cKES</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" onClick={handleCreateTransaction}>
-                  {connected ? "Create Transaction" : "Connect Wallet to Create"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
       </div>
 
+      <Card className="mb-6 w-full max-w-5xl">
+        <CardHeader>
+          <CardTitle className="text-base">Safe Multisig Inspector</CardTitle>
+          <CardDescription>Read owners, threshold and confirm transactions from the on-chain Gnosis Safe.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-3">
+            <Input
+              placeholder="Safe contract address"
+              value={safeAddress}
+              onChange={(e) => setSafeAddress(e.target.value)}
+            />
+            <Button onClick={loadSafeData}>Load Safe</Button>
+          </div>
+          <p className="text-xs text-muted-foreground">{safeStatus || "Enter a Safe address and load to fetch data."}</p>
+          {safeOwners.length > 0 && (
+            <p className="text-xs mt-2 text-green-700">Owners: {safeOwners.map((o) => o).join(", ")}</p>
+          )}
+          {safeThreshold !== null && (
+            <p className="text-xs mt-1 text-green-700">Threshold: {safeThreshold}</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="mb-6 w-full max-w-5xl">
+        <CardHeader>
+          <CardTitle>Safe Activity</CardTitle>
+          <CardDescription>Recent Safe events (ExecutionSuccess, ExecutionFailure, ApproveHash) from chain logs.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {safeEvents.length > 0 ? (
+            <div className="space-y-2">
+              {safeEvents.map((event, idx) => (
+                <div key={idx} className="p-2 border rounded">
+                  <p className="text-xs font-medium">{event.eventName}</p>
+                  <p className="text-xs">Block: {event.blockNumber}</p>
+                  <p className="text-xs">Tx {event.transactionHash}</p>
+                  {event.eventName === "ApproveHash" && (
+                    <div className="mt-1 flex gap-2">
+                      <Button size="sm" onClick={() => handleApprove(event.data)}>Verify</Button>
+                      <Button size="sm" variant="outline" onClick={() => handleReject(event.data)}>Reject</Button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">No Safe events captured.</p>
+          )}
+        </CardContent>
+      </Card>
+      <div className="flex items-center gap-4 mb-4">
+        <Link href="/">
+          <Button variant="outline" className="flex items-center gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Home
+          </Button>
+        </Link>
+        <Button onClick={() => setNewTransactionDialogOpen(true)} className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          New Transaction
+        </Button>
+      </div>
       <div className="w-full max-w-5xl">
-        <h1 className="text-3xl font-bold mb-6">FarmBlock Safe</h1>
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="text-3xl font-bold">FarmBlock Safe</h1>
+          <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-semibold text-blue-800">
+            Farm Agent Ready
+          </span>
+        </div>
         <p className="text-muted-foreground mb-8">
           A community-driven multisig wallet that funds task rewards and yield trading, managed by Guardians through
           decentralized governance.
@@ -247,6 +333,27 @@ export default function FarmBlockSafe() {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="mb-6 w-full">
+          <CardHeader>
+            <CardTitle>Farm Agent</CardTitle>
+            <CardDescription>
+              Keep Safe assets working by enabling scheduled FX swaps and automated yield actions.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">
+              Guardians can configure swap thresholds and automation in the Farm Agent cockpit, then monitor performance directly from the Safe.
+            </p>
+          </CardContent>
+          <CardFooter className="flex justify-end">
+            <Link href="/farm-agent">
+              <Button variant="secondary" className="gap-2">
+                Go to Farm Agent
+              </Button>
+            </Link>
+          </CardFooter>
+        </Card>
 
         <Tabs defaultValue="pending" className="mb-8">
           <TabsList className="mb-4">
