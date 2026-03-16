@@ -15,7 +15,7 @@ export default function ComingSoon() {
         🚧 Coming Soon 🚧
       </h1>
       <p style={{ marginTop: "1rem", color: "#666" }}>
-        Tasks, Casts, NFT Drop/Marketplace are on the way. Stay tuned!
+        Casts is on the way. Stay tuned!
       </p>
     </div>
   );
