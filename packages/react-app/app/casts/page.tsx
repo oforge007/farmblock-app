@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ComingSoon } from "@/components/coming-soon"
+import { ComingSoon } from "@/components/ComingSoon"
 
 
   return (
