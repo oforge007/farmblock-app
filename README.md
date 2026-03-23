@@ -1,45 +1,94 @@
-# FarmBlock - Decentralized Sustainable Agriculture on Celo
+# FarmBlock
 
-**FarmBlock** is a decentralized application (DApp) on Celo that empowers communities to combat global hunger and drought through sustainable agriculture. By leveraging blockchain technology, FarmBlock combines governance, finance, and transparency tools to create a sustainable ecosystem.
+**Decentralized Infrastructure for Climate-Resilient Agribusiness Cooperatives**
 
-FarmBlock integrates with MiniPay
-( https://github.com/celo-org/minipay-template) for seamless stablecoin payments, Gardens V2 (https://github.com/1Hive/gardens-v2) for decentralized governance, Mento for yield generation, thirdweb for NFT minting and trading, Warpcast for transparency, MapBox for geotagging, and Self for zk proof of personhood verification.
+Empowering smallholder farmers in Nigeria through on-chain ownership, transparent governance, and regenerative finance — built on Celo.
 
-## Table of Contents
-- [Features](#features)
-- [Architecture](#architecture)
-- [Prerequisites](#prerequisites)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Smart Contracts](#smart-contracts)
-- [Governance](#governance)
-- [Integrations](#integrations)
-- [Contributing](#contributing)
-- [Roadmap](#roadmap)
-- [License](#license)
-- [Contact](#contact)
+[![Vercel Deployment](https://vercel.com/button)](https://farmblock.vercel.app)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Features
-- **Community-Driven Peer Bank**: A multisig wallet (FarmBlock Safe) funds task rewards and yield trading, managed by Guardians through decentralized governance.
-- **TaskManager**: Farmers and Guardians create, track, and complete tasks (e.g., planting, harvesting), with rewards distributed via Gardens V2 funding pools.
-- **NFT Store**: Mint and trade NFTs tied to agro-products using thirdweb, with payments in Mento stablecoins (cUSD, cKES, cEUR).
-- **Yield Generation**: Guardians deposit funds into Mento stablecoin yield pools to earn returns, with withdrawals approved via Gardens V2 signal pools.
-- **Transparency**: Live updates on FarmBlock activities (e.g., task completions, yield reports) are shared via Warpcast.
-- **Geotagging**: MapBox integration allows users to discover and visualize FarmBlock locations globally.
-- **Financial Inclusion**: MiniPay enables unbanked farmers to pay for services (e.g., task rewards, NFT purchases) using stablecoins.
-- **Humanity Verification**: Self protocol integration provides zk proof of personhood verification for community members.
+## What is FarmBlock?
 
-## Architecture
-FarmBlock is built on Celo, leveraging the following components:
-- **Frontend**: A NextJS app (from the MiniPay template) for a mobile-friendly interface, compatible with Opera Mini.
-- **Smart Contracts**:
-  - `FundingPool.sol`: Manages task rewards (via Gardens V2).
-  - `FarmBlockYieldDepositor.sol`: Handles deposits/withdrawals to Mento stablecoin yield pools.
-  - NFT contracts (via thirdweb) for minting agro-product NFTs.
-- **Governance**: Gardens V2’s Circles model, with funding and signal pools for task management and fund withdrawals.
-- **Integrations**:
-  - Mento Router: Swaps for yield pool deposits/withdrawals.
-  - thirdweb: NFT minting and trading.
-  - Warpcast: Transparency updates.
-  - MapBox: Geotagging farm locations.
-  - Self: zk proof of personhood verification.
+FarmBlock turns traditional farmsteads into **on-chain cooperatives** where farmers, youth, and global supporters co-own and govern productive assets. It combines:
+
+- **zk-proof identity** → Sybil-resistant onboarding
+- **NFT-based membership shares** → Fractional ownership & fundraising
+- **Gnosis Safe multisig treasury** → Trustless fund management
+- **Task-to-earn engine** → Reputation-weighted rewards for farm work
+- **Peer-validated Casts** → Proof-of-impact without expensive IoT
+- **Regenerative payments** → USDm / cUSD / USDT via MiniPay (with Tether Gold as store-of-value)
+
+All wrapped in a **registered Multipurpose Cooperative** so on-chain decisions are legally binding in Nigeria.
+
+Live Demo → https://farmblock.vercel.app
+
+## Core Flow
+
+1. **Onboarding**  
+   - Self zk-proof verification (prove humanity + LGA residency)  
+   - Mint soulbound "Verified Farmer" badge
+
+2. **FarmBlock Creation**  
+   - Verified Guardian initiates → Multisig approval (3-of-5)  
+   - Deploys: ERC-721 NFT collection + linked Gnosis Safe treasury
+
+3. **Membership & Fundraising**  
+   - Guardians mint founder shares free  
+   - Public mints via NFT drop (stake USDm/cUSD chosen by farm holder)  
+   - 100% proceeds locked in Safe
+
+4. **Task-to-Earn Economy**  
+   - Guardians post tasks (e.g., "Install solar pump")  
+   - Applicants stake small amount → Reward escrowed  
+   - Worker completes → Uploads Cast (photo/video + geotag)  
+   - Random validator confirms on-site → 5% fee split  
+   - Reputation updated: +5 success / -20 fraud  
+   - High-rep workers get up to 20% bonus payout
+
+5. **Proof of Impact**  
+   - Immutable on-chain Cast ledger  
+   - Peer consensus replaces hardware sensors  
+   - Donors see real-time, verifiable progress
+
+6. **Payout & Off-ramp**  
+   - Escrow releases cUSD to wallet  
+   - Withdraw to Naira via MiniPay agents/bank (~5 min)
+
+## Tech Stack
+
+- Blockchain: Celo (mobile-first, low fees, cUSD/USDm)  
+- Wallet: MiniPay / Valora  
+- Governance: Gnosis Safe (multisig)  
+- Frontend: Next.js / React / Tailwind  
+- Hosting: Vercel  
+- Identity: zk-proof (self-verification)  
+- NFT: ERC-721 for membership shares  
+- Payments: USDm, USDT, USDC, Tether Gold (store of value)
+
+## Why FarmBlock?
+
+- Solves **trust & corruption** in community agriculture projects  
+- Creates **youth jobs** (validators, workers, Guardians)  
+- Enables **global funding** without middlemen  
+- Legally compliant via Nigerian Cooperative bye-laws  
+- Mobile-first for rural access
+
+## Project Status
+
+- MVP live on Vercel: https://farmblock.vercel.app  
+- Pilot gardens in Ngor-Okpala, Imo State  
+- Integrated MiniPay + real-world payments (@oforgefoods)  
+- Seeking partners for Seplat Growth Academy 2026
+
+## License
+
+MIT License – see [LICENSE](./LICENSE)
+
+## Contact
+
+Jordan Oforge (@Jay_Oforge)  
+X: https://x.com/Jay_Oforge  
+Email: jordan.ofurum@gmail.com  
+Wallet: oforge.celo.eth
+
+Built for rural regeneration. Powered by Celo.
