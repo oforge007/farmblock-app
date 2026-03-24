@@ -15,8 +15,11 @@ Pioneered in alignment with the vision of Evang. Ebuka Obi of Zion Prayer Moveme
 
 ## What is FarmBlock?
 
-FarmBlock turns traditional farmsteads into **on-chain cooperatives** where farmers, youth, and global supporters co-own and govern productive assets for the restoration of Zion. It combines:
+FarmBlock turns traditional farmsteads into **on-chain cooperatives** where farmers, youth, and global supporters co-own and govern productive assets for the restoration of Zion.
 
+**The Zion Network State** is a faith-aligned digital-physical society built on the Celo blockchain, where the people of God restore the land and each other through transparent cooperatives, regenerative agriculture, and collective stewardship. It is the physical manifestation of the City of God on earth — a sovereign community governed by faith, smart contracts, and mutual accountability.
+
+It combines:
 - **zk-proof identity** → Sybil-resistant onboarding  
 - **NFT-based membership shares** → Fractional ownership & fundraising  
 - **Gnosis Safe multisig treasury** → Trustless fund management  
@@ -69,7 +72,11 @@ Live Demo → https://farmblock.vercel.app
 
 7. **Challenge Period & Game Theory Payout**  
    - After validator submission, a **48-hour challenge period** begins  
-   - Any verified member or NFT holder in the FarmBlock can dispute a Cast (with a small stake)  
+   - Any verified member or NFT holder in the FarmBlock can raise a dispute by staking a small amount (e.g., 2 USDm) and submitting counter-evidence (photo/video + explanation) proving the Cast is fraudulent (fake photo, wrong location, work not completed, etc.)  
+   - **If a valid dispute is raised:** Guardians (or all NFT holders) vote on the dispute within 24 hours.  
+   - **Resolution outcomes:**  
+     - Dispute **fails** → original validator consensus stands; worker and validators are paid; challenger’s stake is slashed.  
+     - Dispute **succeeds** → validators who approved the fraudulent Cast have their reputation slashed (-20), their verification fee is clawed back, and the worker’s reward is withheld or reduced. The challenger’s stake is refunded and they may receive a small reward for protecting the treasury.  
    - If no valid dispute is raised and consensus is met:  
      - Smart contract releases remaining reward + original application stake to the worker  
      - Validators receive their verification fee  
