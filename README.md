@@ -1,4 +1,4 @@
-# FarmBlock – Restoring Zion
+# FarmBlock – Regenerating Earth through decentralized cooperatives 
 
 **On-Chain Infrastructure for FarmBlock**    
 
