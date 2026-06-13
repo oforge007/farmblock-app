@@ -1,12 +1,8 @@
 # FarmBlock – Restoring Zion
 
-**On-Chain Infrastructure for the City of God**  
-Pioneered in alignment with the vision of Evang. Ebuka Obi of Zion Prayer Movement Outreach (ZPMO)  
-*"And they shall build the old wastes… they shall raise up the former desolations"* — Isaiah 61:4  
-*"For the seed shall be prosperous… I will cause the remnant of this people to possess all these things"* — Zechariah 8:12
+**On-Chain Infrastructure for FarmBlock**    
 
-**Location:** Ngor-Okpala, Imo State, Nigeria  
-**Mission:** To restore the land and people of Zion through transparent, community-governed, regenerative agriculture on the Celo blockchain.
+**Mission:** To restore the Earth through transparent, community-governed, regenerative agriculture on the Celo blockchain.
 
 [![Vercel Deployment](https://vercel.com/button)](https://farmblock.vercel.app)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -15,9 +11,8 @@ Pioneered in alignment with the vision of Evang. Ebuka Obi of Zion Prayer Moveme
 
 ## What is FarmBlock?
 
-FarmBlock turns traditional farmsteads into **on-chain cooperatives** where farmers, youth, and global supporters co-own and govern productive assets for the restoration of Zion.
+FarmBlock turns traditional farmsteads into **on-chain cooperatives** where farmers, youth, and global supporters co-own and govern productive assets.
 
-**The Zion Network State** is a faith-aligned digital-physical society built on the Celo blockchain, where the people of God restore the land and each other through transparent cooperatives, regenerative agriculture, and collective stewardship. It is the physical manifestation of the City of God on earth — a sovereign community governed by faith, smart contracts, and mutual accountability.
 
 It combines:
 - **zk-proof identity** → Sybil-resistant onboarding  
@@ -27,7 +22,7 @@ It combines:
 - **Peer-validated Casts** → Proof-of-impact without expensive IoT  
 - **Regenerative payments** → USDm, USDT, USDC via MiniPay  
 
-All wrapped in a **registered Multipurpose Cooperative** so on-chain decisions are legally binding in Nigeria.
+All wrapped in a **registered Multipurpose Cooperative** so on-chain decisions are legally binding.
 
 Live Demo → https://farmblock.vercel.app
 
@@ -102,16 +97,15 @@ Live Demo → https://farmblock.vercel.app
 - Solves **trust & corruption** in community agriculture projects  
 - Creates **youth jobs** (validators, workers, Guardians)  
 - Enables **global funding** without middlemen  
-- Legally compliant via Nigerian Cooperative bye-laws  
-- Mobile-first for rural access in the restoration of Zion  
+- Legally compliant via Cooperative bye-laws  
+- Mobile-first for rural access  
 - Validators are **specific FarmBlock NFT holders** — ensuring skin in the game and true community accountability
 
 ---
 
 ## Project Status
 
-- MVP live on Vercel: https://farmblock.vercel.app  
-- Pilot gardens in Ngor-Okpala, Imo State  
+- MVP live on Vercel: https://farmblock.vercel.app    
 
 ---
 
@@ -128,5 +122,5 @@ X: https://x.com/Jay_Oforge
 Email: jordan.ofurum@gmail.com  
 Wallet: oforge.celo.eth
 
-**Built for the restoration of Zion.**  
+**Built for the restoration of Earth.**  
 Powered by Celo and community faith.
